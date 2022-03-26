@@ -2,7 +2,7 @@
 
 module ImmediateGenerator(input [31:0] part_of_inst, output [31:0] imm_gen_out);
   
-  always_comb begin
+  always begin
     case(part_of_inst[6:0])
     // R-type instruction
     `ARITHMETIC : imm_gen_out = {part_of_inst[31:12], 12'b0};
