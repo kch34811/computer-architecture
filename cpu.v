@@ -55,6 +55,7 @@ module CPU(input reset,       // positive reset signal
   reg [3:0] ALUop;
   reg isEcall;
   reg [31:0] x17;
+  reg haltFlag;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -146,10 +147,14 @@ module CPU(input reset,       // positive reset signal
   MUX2_to_1 #(32) DataMemMux (ALUResult, DataMemOut, MemToReg, DataMemMuxOut);
 
   MUX2_to_1 #(32) WriteDataMux (DataMemMuxOut, PCAdderOut1, PCToReg, RegData);
+  
+  assign is_halted = haltFlag;
 
+  always @(*) begin
     if (isEcall == 1'b1 && x17 == 10) begin
-      is_halted = 1'b1;
+      haltFlag = 1'b1;
     end
-    else is_halted = 1'b0;
+    else haltFlag = 1'b0;
+  end
     
 endmodule
