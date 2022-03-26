@@ -76,7 +76,7 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit (
-    .part_of_inst(),  // input
+    .all_of_inst(),  // input
     .alu_op()         // output
   );
 

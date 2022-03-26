@@ -54,7 +54,7 @@ module ControlUnit (input part_of_inst,
         end
 
         if(part_of_inst == `ECALL) begin
-            is_ecall = 1'b1;
+            is_ecall = 1'b1; // check GPR[x17]
         end
 
     end
