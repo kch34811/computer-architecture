@@ -21,7 +21,7 @@ module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
 
-  is_halted = 1'b0;
+  assign is_halted = 1'b0;
 
   /***** Wire declarations *****/
 
@@ -135,22 +135,21 @@ module CPU(input reset,       // positive reset signal
     .dout (DataMemOut)        // output
   );
 
-  Adder #(32) PCAdder1 (input [31:0] PCOut, 4'b32, output PCAdderOut1);
-  Adder #(32) PCAdder2 (input [31:0] PCOut, input [31:0] ImmGenOut, output PCAdderOut2);
+  Adder #(32) PCAdder1 (PCOut, 4, PCAdderOut1);
+  Adder #(32) PCAdder2 (PCOut, ImmGenOut, PCAdderOut2);
 
-  MUX2_to_1 #(32) PCAdderMux1 (input [31:0] PCAdderOut2, input ((branch & bcond) | JAL), output [31:0] PCAdderMuxOut);
-  MUX2_to_1 #(32) PCAdderMux2 (input [31:0] PCAdderMuxOut, input [31:0] ALUResult, input JALR, output [31:0] PCIn);
+  MUX2_to_1 #(32) PCAdderMux1 (PCAdderOut2, ((branch & bcond) | JAL), PCAdderMuxOut);
+  MUX2_to_1 #(32) PCAdderMux2 (PCAdderMuxOut, ALUResult, JALR, PCIn);
 
-  MUX2_to_1 #(32) ALUInputMux (input [31:0] rs2_dout, input [31:0] ImmGenOut, input AluSrc, output [31:0] ALUIn);
+  MUX2_to_1 #(32) ALUInputMux (rs2_dout, ImmGenOut, AluSrc, ALUIn);
 
-  MUX2_to_1 #(32) DataMemMux (input [31:0] ALUResult, input [31:0] DataMemOut, input MemToReg, output [31:0] DataMemMuxOut);
+  MUX2_to_1 #(32) DataMemMux (ALUResult, DataMemOut, MemToReg, DataMemMuxOut);
 
-  MUX2_to_1 #(32) WriteDataMux (input [31:0] DataMemMuxOut, input [31:0] PCAdderOut1, input PCToReg, output [31:0] RegData);
+  MUX2_to_1 #(32) WriteDataMux (DataMemMuxOut, PCAdderOut1, PCToReg, RegData);
 
-  always @(isEcall) begin
     if (isEcall == 1'b1 && x17 == 10) begin
       is_halted = 1'b1;
     end
-  end
-
+    else is_halted = 1'b0;
+    
 endmodule
