@@ -9,12 +9,12 @@ module ImmediateGenerator(input [6:0] part_of_inst, input [31:0] all_of_inst, ou
 
     // I-type instruction
     `ARITHMETIC_IMM : begin 
-      if(all_of_inst[14:12]==`FUNCT3_SRL||all_of_inst[14:12]==`FUNCT3_SLL)
-        imm_gen_out = {all_of_inst[24]? 27'b1 : 27'b0, all_of_inst[24:20]};
+      if(all_of_inst[14:12]==`FUNCT3_SRL || all_of_inst[14:12]==`FUNCT3_SLL)
+        imm_gen_out = {all_of_inst[24]? 27{1'b1} : 27{1'b0}, all_of_inst[24:20]};
       else 
         imm_gen_out = {all_of_inst[31]? 20'b1 : 20'b0, all_of_inst[31:20]};
       end
-    `LOAD : imm_gen_out = {all_of_inst[31]? 20'b1 : 20'b0, all_of_inst[31:20]};
+    `LOAD : imm_gen_out = {all_of_inst[31]? 20{1'b1} : 20{1'b0}, all_of_inst[31:20]};
     `JALR : imm_gen_out = {all_of_inst[31]? 20'b1 : 20'b0, all_of_inst[30:20]};
 
     // S-type instruction
