@@ -46,6 +46,14 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
   // Synchronously write data to the memory
   // (use dmem_addr to access memory)
 
+  if(mem_read == 1'b1) begin
+    dout = mem[dmem_addr];
+  end
+
+  if(mem_write == 1'b1) begin
+    mem[din] = mem[dmem_addr];
+  end
+
   // Initialize data memory (do not touch)
   always @(posedge clk) begin
     if (reset) begin
