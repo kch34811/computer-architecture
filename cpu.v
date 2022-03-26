@@ -13,48 +13,49 @@ module CPU(input reset,       // positive reset signal
            output is_halted); // Whehther to finish simulation
   /***** Wire declarations *****/
 
-  wire part_of_inst = dout[6:0];
-  wire rs1 = dout[19:15];
-  wire rs2 = dout[24:20];
-  wire rd = dout[11:7];
-  wire all_of_inst = dout;
+  wire [31:0]PCOut;
+  wire [31:0]InstMemOut;
+  wire [31:0]rs1_dout;
+  wire [31:0]rs2_dout;
 
   /***** Register declarations *****/
+
+  reg RegWrite;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
   PC pc(
-    .reset(),       // input (Use reset to initialize PC. Initial value must be 0)
-    .clk(),         // input
+    .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
+    .clk(clk),         // input
     .next_pc(),     // input
-    .current_pc()   // output
+    .current_pc(PCOut)   // output
   );
   
   // ---------- Instruction Memory ----------
   InstMemory imem(
-    .reset(),   // input
-    .clk(),     // input
-    .addr(),    // input
-    .dout()     // output
+    .reset(reset),   // input
+    .clk(clk),     // input
+    .addr(PCOut),    // input
+    .dout(InstMemOut)     // output
   );
 
   // ---------- Register File ----------
   RegisterFile reg_file (
-    .reset (),        // input
-    .clk (),          // input
-    .rs1 (),          // input
-    .rs2 (),          // input
-    .rd (),           // input
+    .reset (reset),        // input
+    .clk (clk),          // input
+    .rs1 (InstMemOut[19:15]),          // input
+    .rs2 (InstMemOut[24:20]),          // input
+    .rd (InstMemOut[11:7]),           // input
     .rd_din (),       // input
-    .write_enable (),    // input
-    .rs1_dout (),     // output
-    .rs2_dout ()      // output
+    .write_enable (RegWrite),    // input
+    .rs1_dout (rs1_dout),     // output
+    .rs2_dout (rs2_dout)      // output
   );
 
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
-    .part_of_inst(),  // input
+    .part_of_inst(InstMemOut[6:0]),  // input
     .is_jal(),        // output
     .is_jalr(),       // output
     .branch(),        // output
@@ -62,7 +63,7 @@ module CPU(input reset,       // positive reset signal
     .mem_to_reg(),    // output
     .mem_write(),     // output
     .alu_src(),       // output
-    .write_enable(),     // output
+    .write_enable(RegWrite),     // output
     .pc_to_reg(),     // output
     .is_ecall()       // output (ecall inst)
   );
@@ -83,7 +84,7 @@ module CPU(input reset,       // positive reset signal
   // ---------- ALU ----------
   ALU alu (
     .alu_op(),      // input
-    .alu_in_1(),    // input  
+    .alu_in_1(rs1_dout),    // input  
     .alu_in_2(),    // input
     .alu_result(),  // output
     .alu_bcond()     // output
