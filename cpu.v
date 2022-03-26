@@ -20,6 +20,7 @@ module CPU(input reset,       // positive reset signal
   wire all_of_inst = dout;
 
   // commit test222
+  // second commit test
 
   /***** Register declarations *****/
 
