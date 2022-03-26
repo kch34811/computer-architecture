@@ -1,6 +1,7 @@
 `include "opcodes.v"
 
 module ImmediateGenerator(input [6:0] part_of_inst, input [31:0] all_of_inst, output [31:0] imm_gen_out);
+  
   case(part_of_inst)
 
     // R-type instruction
@@ -8,10 +9,12 @@ module ImmediateGenerator(input [6:0] part_of_inst, input [31:0] all_of_inst, ou
 
     // I-type instruction
     `ARITHMETIC_IMM : begin 
-      if(part_of_inst[])
+      if(all_of_inst[14:12]==`FUNCT3_SRL||all_of_inst[14:12]==`FUNCT3_SLL)
+        imm_gen_out = {all_of_inst[24]? 27'b1 : 27'b0, all_of_inst[24:20]};
+      else 
+        imm_gen_out = {all_of_inst[31]? 20'b1 : 20'b0, all_of_inst[31:20]};
       end
     `LOAD : imm_gen_out = {all_of_inst[31]? 20'b1 : 20'b0, all_of_inst[31:20]};
-    //*check
     `JALR : imm_gen_out = {all_of_inst[31]? 20'b1 : 20'b0, all_of_inst[30:20]};
 
     // S-type instruction
