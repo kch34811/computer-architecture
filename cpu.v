@@ -19,9 +19,6 @@ module CPU(input reset,       // positive reset signal
   wire rd = dout[11:7];
   wire all_of_inst = dout;
 
-  // commit test222
-  // second commit test
-
   /***** Register declarations *****/
 
   // ---------- Update program counter ----------
