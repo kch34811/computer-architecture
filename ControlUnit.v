@@ -8,7 +8,7 @@ module ControlUnit (input part_of_inst,
                     output reg alu_src,
                     output reg write_enable,
                     output reg pc_to_reg,
-                    output reg is_call);
+                    output reg is_ecall);
 
     always @(part_of_inst) begin
         is_jal = 1'b0;
@@ -20,7 +20,7 @@ module ControlUnit (input part_of_inst,
         alu_src = 1'b0;
         write_enable = 1'b0;
         pc_to_reg = 1'b0;
-        is_call = 1'b0;
+        is_ecall = 1'b0;
         
         if (part_of_inst == `JAL) begin
             is_jar = 1'b1;
@@ -32,20 +32,30 @@ module ControlUnit (input part_of_inst,
             pc_to_reg = 1'b1;
         end
 
-        if (part_of_inst == 7'0000011) begin // opcode == LW/LH/LB
+        if (part_of_inst == `LOAD) begin // opcode == LW/LH/LB
             mem_read = 1'b1;
             mem_to_reg = 1'b1;
         end
 
-        if (part_of_inst == 7'b0100011) begin 
+        if (part_of_inst == `STORE) begin 
             mem_write = 1'b1;
         end
 
-        if (part_of_inst != 7'b0110011 && part_of_inst != 7'b1100011) begin // opcode Rtype(0110011), SBtype(1100011)
+        if (part_of_inst != `ARITHMETIC && part_of_inst != `BRANCH) begin // opcode Rtype(0110011), SBtype(1100011)
             alu_src = 1'b1;
         end
 
-        //branch, write_enable, is_call
+        if(part_of_inst != `STORE && part_of_inst != `BRANCH) begin
+            write_enable = 1'b1;
+        end
+
+        if(part_of_inst == `BRANCH) begin
+            branch = 1'b1;
+        end
+
+        if(part_of_inst == `ECALL) begin
+            ECALL = 1'b1;
+        end
 
     end
 
