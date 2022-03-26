@@ -2,8 +2,8 @@
 
 module ImmediateGenerator(input [6:0] part_of_inst, input [31:0] all_of_inst, output [31:0] imm_gen_out);
   
-  case(part_of_inst)
-
+  always_comb begin
+    case(part_of_inst)
     // R-type instruction
     `ARITHMETIC : imm_gen_out = {all_of_inst[31:12], 12'b0};
 
@@ -30,4 +30,7 @@ module ImmediateGenerator(input [6:0] part_of_inst, input [31:0] all_of_inst, ou
     // J-type instruction
     `JAL : imm_gen_out = {all_of_inst[31]? 20'b1:20'b0, all_of_inst[19:12], all_of_inst[19:12], all_of_inst[20], all_of_inst[30:25], all_of_inst[24:21], 1'b0}
 
+    defualt : imm_gen_out = {32'b0};
+    endcase
+  end  
 endmodule
