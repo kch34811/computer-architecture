@@ -1,3 +1,5 @@
+`include "opcodes.v"
+
 module ALUControlUnit (input [31:0] all_of_inst, output reg [3:0] alu_op);
 
     always @(all_of_inst) begin

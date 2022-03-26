@@ -53,8 +53,9 @@ always @* begin
 		4'b1101: 
 			begin
 				alu_result = alu_in_1 >> 1;
-				if(alu_in_1[31] == 1)
+				if(alu_in_1[31] == 1) begin
 					alu_result[31] = 1;
+                end
 			end
 		4'b1110: alu_result = ~alu_in_1 + 1;
 		4'b1111: alu_result = 0;
