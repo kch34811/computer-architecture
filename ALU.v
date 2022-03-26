@@ -24,7 +24,7 @@ always @* begin
 		4'b0000:
 			begin
 				alu_result = alu_in_1 + alu_in_2;
-                alu_in_1 == alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
+                alu_bcond = (alu_in_1 == alu_in_2) ? 1 : 0;
 			end
 		4'b0001: alu_result = alu_in_1 - alu_in_2;
 		4'b0010: alu_result = alu_in_1;
@@ -36,18 +36,18 @@ always @* begin
 		4'b1000: 
             begin
                 alu_result = alu_in_1 ^ alu_in_2;
-                alu_in_1 < alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
+                alu_bcond = (alu_in_1 < alu_in_2) ? 1 : 0;
             end
 		4'b1001: alu_result = alu_in_1 ^ ~alu_in_2;
 		4'b1010:
             begin
                  alu_result = alu_in_1 << 1;
-                 alu_in_1 != alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
+                 alu_bcond = (alu_in_1 != alu_in_2) ? 1 : 0;
             end
 		4'b1011:
             begin
                  alu_result = alu_in_1 >> 1;
-                 alu_in_1 >= alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
+                 alu_bcond = (alu_in_1 >= alu_in_2) ? 1 : 0;
             end
 		4'b1100: alu_result = alu_in_1 <<< 1;
 		4'b1101: 

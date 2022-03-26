@@ -10,7 +10,7 @@ module ALUControlUnit (input [31:0] all_of_inst, output reg [3:0] alu_op);
 
         if (opcode == `ARITHMETIC) begin
             case(funct3)
-            3'b000: funct7 == `FUNCT7_SUB ? alu_op = 4'b0001 : alu_op = 4'b0000;
+            3'b000: alu_op = (funct7 == `FUNCT7_SUB) ? 4'b0001 : 4'b0000;
 
             `FUNCT3_SLL: alu_op = 4'b1010;
 
