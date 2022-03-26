@@ -123,13 +123,13 @@ module CPU(input reset,       // positive reset signal
   Adder #(32) PCAdder1 (input [31:0] PCOut, 4'b32, output PCAdderOut1);
   Adder #(32) PCAdder2 (input [31:0] PCOut, input [31:0] ImmGenOut, output PCAdderOut2);
 
-  MUX2_to_1 #(32) PCAdderMux1 (input [31:0] PCAdderOut1, input [31:0] PCAdderOut2, input ((branch & bcond) | JAL), output [31:0] PCAdderMuxOut);
+  MUX2_to_1 #(32) PCAdderMux1 (input [31:0] PCAdderOut2, input ((branch & bcond) | JAL), output [31:0] PCAdderMuxOut);
   MUX2_to_1 #(32) PCAdderMux2 (input [31:0] PCAdderMuxOut, input [31:0] ALUResult, input JALR, output [31:0] PCIn);
 
   MUX2_to_1 #(32) ALUInputMux (input [31:0] rs2_dout, input [31:0] ImmGenOut, input AluSrc, output [31:0] ALUIn);
 
-  MUX2_to_1 #(32) DataMemMux (input [31:0] DataMemOut, input [31:0] ALUResult, input MemToReg, output [31:0] DataMemMuxOut);
+  MUX2_to_1 #(32) DataMemMux (input [31:0] ALUResult, input [31:0] DataMemOut, input MemToReg, output [31:0] DataMemMuxOut);
 
-  MUX2_to_1 #(32) WriteDataMux (input [31:0] PCAdderOut1, input [31:0] DataMemMuxOut, input PCToReg, output [31:0] RegData);
+  MUX2_to_1 #(32) WriteDataMux (input [31:0] DataMemMuxOut, input [31:0] PCAdderOut1, input PCToReg, output [31:0] RegData);
 
 endmodule
