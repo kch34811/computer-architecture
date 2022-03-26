@@ -11,6 +11,9 @@
 module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
+
+  is_halted = 1'b0;
+
   /***** Wire declarations *****/
 
   wire [31:0] PCOut;
@@ -41,6 +44,8 @@ module CPU(input reset,       // positive reset signal
   reg MemRead;
   reg PCToReg;
   reg [3:0] ALUop;
+  reg isEcall;
+  reg [31:0] x17;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -69,7 +74,8 @@ module CPU(input reset,       // positive reset signal
     .rd_din (RegData),       // input
     .write_enable (RegWrite),    // input
     .rs1_dout (rs1_dout),     // output
-    .rs2_dout (rs2_dout)      // output
+    .rs2_dout (rs2_dout),      // output
+    .x17 (x17)
   );
 
 
@@ -85,7 +91,7 @@ module CPU(input reset,       // positive reset signal
     .alu_src(AluSrc),       // output
     .write_enable(RegWrite),     // output
     .pc_to_reg(PCToReg),     // output
-    .is_ecall()       // output (ecall inst)
+    .is_ecall(isEcall)       // output (ecall inst)
   );
 
   // ---------- Immediate Generator ----------
@@ -131,5 +137,11 @@ module CPU(input reset,       // positive reset signal
   MUX2_to_1 #(32) DataMemMux (input [31:0] ALUResult, input [31:0] DataMemOut, input MemToReg, output [31:0] DataMemMuxOut);
 
   MUX2_to_1 #(32) WriteDataMux (input [31:0] DataMemMuxOut, input [31:0] PCAdderOut1, input PCToReg, output [31:0] RegData);
+
+  always @(isEcall) begin
+    if (isEcall == 1'b1 && x17 == 10) begin
+      is_halted = 1'b1;
+    end
+  end
 
 endmodule
