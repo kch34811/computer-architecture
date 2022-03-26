@@ -1,7 +1,7 @@
 module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
                                                  input clk,
                                                  input [31:0] addr,   // address of the instruction memory
-                                                 output [31:0] dout); // instruction at addr
+                                                 output reg [31:0] dout); // instruction at addr
   integer i;
   // Instruction memory
   reg [31:0] mem[0:MEM_DEPTH - 1];
@@ -12,8 +12,9 @@ module InstMemory #(parameter MEM_DEPTH = 1024) (input reset,
   // TODO
   // Asynchronously read instruction from the memory 
   // (use imem_addr to access memory)
-
-  dout = mem[imem_addr];
+  always @(addr) begin
+    dout = mem[imem_addr];
+  end
 
   // Initialize instruction memory (do not touch except path)
   always @(posedge clk) begin
@@ -33,7 +34,7 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
                                                   input [31:0] din,     // data to be written
                                                   input mem_read,       // is read signal driven?
                                                   input mem_write,      // is write signal driven?
-                                                  output [31:0] dout);  // output of the data memory at addr
+                                                  output reg [31:0] dout);  // output of the data memory at addr
   integer i;
   // Data memory
   reg [31:0] mem[0: MEM_DEPTH - 1];
@@ -45,13 +46,16 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
   // Asynchrnously read data from the memory
   // Synchronously write data to the memory
   // (use dmem_addr to access memory)
-
-  if(mem_read == 1'b1) begin
-    dout = mem[dmem_addr];
+  always @(addr) begin
+    if(mem_read == 1'b1) begin
+      dout = mem[dmem_addr];
+    end
   end
 
-  if(mem_write == 1'b1) begin
-    mem[din] = mem[dmem_addr];
+  always begin
+    if(mem_write == 1'b1) begin
+      mem[din] = mem[dmem_addr];
+    end
   end
 
   // Initialize data memory (do not touch)
