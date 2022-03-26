@@ -13,14 +13,19 @@ module CPU(input reset,       // positive reset signal
            output is_halted); // Whehther to finish simulation
   /***** Wire declarations *****/
 
-  wire [31:0]PCOut;
-  wire [31:0]InstMemOut;
-  wire [31:0]rs1_dout;
-  wire [31:0]rs2_dout;
+  wire [31:0] PCOut;
+  wire [31:0] InstMemOut;
+  wire [31:0] rs1_dout;
+  wire [31:0] rs2_dout;
+  wire [31:0] ALUResult;
+  wire [31:0] ImmGenOut;
 
   /***** Register declarations *****/
 
   reg RegWrite;
+  reg MemWrite;
+  reg MemRead;
+  reg [3:0] ALUop;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -59,9 +64,9 @@ module CPU(input reset,       // positive reset signal
     .is_jal(),        // output
     .is_jalr(),       // output
     .branch(),        // output
-    .mem_read(),      // output
+    .mem_read(MemRead),      // output
     .mem_to_reg(),    // output
-    .mem_write(),     // output
+    .mem_write(MemWrite),     // output
     .alu_src(),       // output
     .write_enable(RegWrite),     // output
     .pc_to_reg(),     // output
@@ -70,34 +75,33 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Immediate Generator ----------
   ImmediateGenerator imm_gen(
-    .part_of_inst(),  // input
-    .all_of_inst(),   // input
-    .imm_gen_out()    // output
+    .part_of_inst(InstMemOut[31:0]),  // input
+    .imm_gen_out(ImmGenOut)    // output
   );
 
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit (
-    .all_of_inst(),  // input
-    .alu_op()         // output
+    .all_of_inst(InstMemOut[31:0]),  // input
+    .alu_op(ALUop)         // output
   );
 
   // ---------- ALU ----------
   ALU alu (
-    .alu_op(),      // input
+    .alu_op(ALUop),      // input
     .alu_in_1(rs1_dout),    // input  
     .alu_in_2(),    // input
-    .alu_result(),  // output
+    .alu_result(ALUResult),  // output
     .alu_bcond()     // output
   );
 
   // ---------- Data Memory ----------
   DataMemory dmem(
-    .reset (),      // input
-    .clk (),        // input
-    .addr (),       // input
-    .din (),        // input
-    .mem_read (),   // input
-    .mem_write (),  // input
+    .reset (reset),      // input
+    .clk (clk),        // input
+    .addr (ALUResult),       // input
+    .din (rs2_dout),        // input
+    .mem_read (MemRead),   // input
+    .mem_write (MemWrite),  // input
     .dout ()        // output
   );
 endmodule

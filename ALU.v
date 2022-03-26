@@ -1,9 +1,9 @@
-module ALU #(parameter data_width = 32) (
-	input [data_width - 1 : 0] A, 
-	input [data_width - 1 : 0] B, 
-	input [3 : 0] FuncCode,
-       	output reg [data_width - 1: 0] C,
-       	output reg bcond);
+module ALU (
+	input [31:0] alu_in_1, 
+	input [31:0] alu_in_2, 
+	input [3:0] alu_op,
+       	output reg [31:0] alu_result,
+       	output reg alu_bcond);
 // Do not use delay in your implementation.
 
 // You can declare any variables as needed.
@@ -18,47 +18,46 @@ module ALU #(parameter data_width = 32) (
 */
 
 always @* begin
-	OverflowFlag = 0
-    bcond = 0;
+    alu_bcond = 0;
 
-	case(FuncCode)
+	case(alu_op)
 		4'b0000:
 			begin
-				C = A + B;
-                A == B ? bcond = 1 : bcond = 0;
+				alu_result = alu_in_1 + alu_in_2;
+                alu_in_1 == alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
 			end
-		4'b0001: C = A - B;
-		4'b0010: C = A;
-		4'b0011: C = ~A;
-		4'b0100: C = A & B;
-		4'b0101: C = A | B;
-		4'b0110: C = ~(A & B);
-		4'b0111: C = ~(A | B);
+		4'b0001: alu_result = alu_in_1 - alu_in_2;
+		4'b0010: alu_result = alu_in_1;
+		4'b0011: alu_result = ~alu_in_1;
+		4'b0100: alu_result = alu_in_1 & alu_in_2;
+		4'b0101: alu_result = alu_in_1 | alu_in_2;
+		4'b0110: alu_result = ~(alu_in_1 & alu_in_2);
+		4'b0111: alu_result = ~(alu_in_1 | alu_in_2);
 		4'b1000: 
             begin
-                C = A ^ B;
-                A < B ? bcond = 1 : bcond = 0;
+                alu_result = alu_in_1 ^ alu_in_2;
+                alu_in_1 < alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
             end
-		4'b1001: C = A ^ ~B;
+		4'b1001: alu_result = alu_in_1 ^ ~alu_in_2;
 		4'b1010:
             begin
-                 C = A << 1;
-                 A != B ? bcond = 1 : bcond = 0;
+                 alu_result = alu_in_1 << 1;
+                 alu_in_1 != alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
             end
 		4'b1011:
             begin
-                 C = A >> 1;
-                 A >= B ? bcond = 1 : bcond = 0;
+                 alu_result = alu_in_1 >> 1;
+                 alu_in_1 >= alu_in_2 ? alu_bcond = 1 : alu_bcond = 0;
             end
-		4'b1100: C = A <<< 1;
+		4'b1100: alu_result = alu_in_1 <<< 1;
 		4'b1101: 
 			begin
-				C = A >> 1;
-				if(A[15] == 1)
-					C[15] = 1;
+				alu_result = alu_in_1 >> 1;
+				if(alu_in_1[31] == 1)
+					alu_result[31] = 1;
 			end
-		4'b1110: C = ~A + 1;
-		4'b1111: C = 0;
+		4'b1110: alu_result = ~alu_in_1 + 1;
+		4'b1111: alu_result = 0;
 	endcase
 end
 
