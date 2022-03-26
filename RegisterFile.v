@@ -15,13 +15,6 @@ module RegisterFile(input	reset,
   // Asynchronously read register file
   // Synchronously write data to the register file
   
-  //initialization
-  initial begin 
-    for(i = 0; i < 32; i++) begin
-      rf[i] = 0;
-    end
-  end
-
   //assign Read registers to Read datas
   assign rs1_dout = rf[rs1];
   assign rs2_dout = rf[rs2];
