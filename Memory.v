@@ -46,17 +46,15 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
   // Asynchrnously read data from the memory
   // Synchronously write data to the memory
   // (use dmem_addr to access memory)
-  always @(mem_read) begin
+  always @(*) begin
     if(mem_read == 1'b1) begin
       dout <= mem[dmem_addr];
-      $display("read");
     end
   end
 
-  always @(din) begin
+  always @(posedge clk) begin
     if(mem_write == 1'b1) begin
-      mem[din] <= mem[dmem_addr];
-      $display("write");
+      mem[dmem_addr] <= din;
     end
   end
 
