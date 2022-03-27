@@ -145,7 +145,7 @@ module CPU(input reset,       // positive reset signal
   MUX2_to_1 #(32) DataMemMux (ALUResult, DataMemOut, MemToReg, DataMemMuxOut);
 
   MUX2_to_1 #(32) WriteDataMux (DataMemMuxOut, PCAdderOut1, PCToReg, RegData);
-  
+
   assign is_halted = haltFlag;
 
   always @(*) begin
@@ -154,5 +154,5 @@ module CPU(input reset,       // positive reset signal
     end
     else haltFlag <= 1'b0;
   end
-    
+
 endmodule
