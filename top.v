@@ -27,9 +27,13 @@ module top;
     #5 clk = ~clk;
   end
 
+  integer j;
   // Calculate total cycle
   always @(posedge clk) begin
     total_cycle <= total_cycle + 1;
+    $display("cycle: ", total_cycle);
+      for (j = 0; j < 32; j = j + 1)
+          $display("%d %x", j, cpu.reg_file.rf[j]);
   end
 
   // After simulation finishes.
