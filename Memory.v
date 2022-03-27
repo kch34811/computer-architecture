@@ -52,7 +52,7 @@ module DataMemory #(parameter MEM_DEPTH = 16384) (input reset,
     end
   end
 
-  always begin
+  always @(posedge clk) begin
     if(mem_write == 1'b1) begin
       mem[din] = mem[dmem_addr];
     end

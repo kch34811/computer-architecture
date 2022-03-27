@@ -42,19 +42,19 @@ module CPU(input reset,       // positive reset signal
 
   /***** Register declarations *****/
 
-  reg JAL;
-  reg JALR;
-  reg branch;
-  reg bcond;
-  reg AluSrc;
-  reg RegWrite;
-  reg MemWrite;
-  reg MemToReg;
-  reg MemRead;
-  reg PCToReg;
-  reg [3:0] ALUop;
-  reg isEcall;
-  reg [31:0] x17;
+  wire JAL;
+  wire JALR;
+  wire branch;
+  wire bcond;
+  wire AluSrc;
+  wire RegWrite;
+  wire MemWrite;
+  wire MemToReg;
+  wire MemRead;
+  wire PCToReg;
+  wire [3:0] ALUop;
+  wire isEcall;
+  wire [31:0] x17;
   reg haltFlag;
 
   // ---------- Update program counter ----------
@@ -139,7 +139,7 @@ module CPU(input reset,       // positive reset signal
   Adder #(32) PCAdder1 (PCOut, 4, PCAdderOut1);
   Adder #(32) PCAdder2 (PCOut, ImmGenOut, PCAdderOut2);
 
-  MUX2_to_1 #(32) PCAdderMux1 (PCAdderOut2, ((branch & bcond) | JAL), PCAdderMuxOut);
+  MUX2_to_1 #(32) PCAdderMux1 (PCAdderOut1, PCAdderOut2, ((branch & bcond) | JAL), PCAdderMuxOut);
   MUX2_to_1 #(32) PCAdderMux2 (PCAdderMuxOut, ALUResult, JALR, PCIn);
 
   MUX2_to_1 #(32) ALUInputMux (rs2_dout, ImmGenOut, AluSrc, ALUIn);
@@ -152,9 +152,9 @@ module CPU(input reset,       // positive reset signal
 
   always @(*) begin
     if (isEcall == 1'b1 && x17 == 10) begin
-      haltFlag = 1'b1;
+      haltFlag <= 1'b1;
     end
-    else haltFlag = 1'b0;
+    else haltFlag <= 1'b0;
   end
     
 endmodule
