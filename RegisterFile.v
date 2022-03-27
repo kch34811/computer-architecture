@@ -22,7 +22,7 @@ module RegisterFile(input	reset,
   assign x17 = rf[17];
 
   always @(posedge clk) begin
-    if (write_enable) rf[rd] <= rd_din;
+    if (write_enable && rd != 4'b0)  rf[rd] <= rd_din;
   end
 
   // Initialize register file (do not touch)
