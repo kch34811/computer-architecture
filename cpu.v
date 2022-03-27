@@ -21,8 +21,6 @@ module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
 
-  assign is_halted = 1'b0;
-
   /***** Wire declarations *****/
 
   wire [31:0] PCOut;
