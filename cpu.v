@@ -29,7 +29,7 @@ module CPU(input reset,       // positive reset signal
 
   wire PCWriteNotCond;
   wire PCWrite;
-  wire lorD;
+  wire IorD;
   wire MemRead;
   wire MemWrite;
   wire MemtoReg;
@@ -48,7 +48,7 @@ module CPU(input reset,       // positive reset signal
   wire ALUOut_wire;
 
   wire isEcall;
-  wire [31:0] x17;
+  //wire [31:0] x17;
 
   /***** Register declarations *****/
   reg [31:0] IR; // instruction register
@@ -57,12 +57,13 @@ module CPU(input reset,       // positive reset signal
   reg [31:0] B; // Read 2 data register
   reg [31:0] ALUOut; // ALU output register
   // Do not modify and use registers declared above.
+  reg haltFlag;
 
   assign IR_wire = IR;
   assign MDR_wire = MDR;
-  wire A_wire = A;
-  wire B_wire = B;
-  wire ALUOut_wire = ALUOut;
+  assign A_wire = A;
+  assign B_wire = B;
+  assign ALUOut_wire = ALUOut;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -100,22 +101,22 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit(
-    .part_of_inst(), // input
-    .clk(), // input
-    .reset(), // input
-    .PC_write_not_cond(), // output 
-    .PC_write(), // output
-    .i_or_d(), // output
-    .mem_read(), // output
-    .mem_write(), // output
-    .mem_to_reg(), // output
-    .IR_write(), // output
-    .PC_source(), // output
-    .ALU_op(), // output 2bit
-    .ALU_src_a(), // output
-    .ALU_src_b(), // output 2bit
-    .reg_write(), // output
-    .is_ecall() // output
+    .part_of_inst(IR_wire[6:0]), // input
+    .clk(clk), // input
+    .reset(reset), // input
+    .PC_write_not_cond(PCWriteNotCond), // output 
+    .PC_write(PCWrite), // output
+    .i_or_d(IorD), // output
+    .mem_read(MemRead), // output
+    .mem_write(MemWrite), // output
+    .mem_to_reg(MemtoReg), // output
+    .IR_write(IRWrite), // output
+    .PC_source(PCSource), // output
+    .ALU_op(ALUop), // output 2bit
+    .ALU_src_a(ALUSrcA), // output
+    .ALU_src_b(ALUSrcB), // output 2bit
+    .reg_write(RegWrite), // output
+    .is_ecall(isEcall) // output
   );
 
   // ---------- Immediate Generator ----------
@@ -139,7 +140,7 @@ module CPU(input reset,       // positive reset signal
     .alu_bcond(bcond)     // output
   );
 
-  MUX2_to_1 #(32) MUX1 (PCOut, ALUOut_wire, lorD, MUX1Out);
+  MUX2_to_1 #(32) MUX1 (PCOut, ALUOut_wire, IorD, MUX1Out);
   MUX2_to_1 #(32) MUX2 (ALUOut_wire, MDR_wire, MemtoReg, MUX2Out);
   MUX2_to_1 #(32) MUX3 (PCOut, A_wire, ALUSrcA, MUX3Out);
   MUX4_to_1 #(32) MUX4 (B_wire, 4, ImmGenOut, 0, ALUSrcB, MUX4Out);
@@ -161,4 +162,13 @@ module CPU(input reset,       // positive reset signal
       ALUOut <= ALUResult;
     end
   end
+
+  assign is_halted = haltFlag;
+  always @(*) begin
+    if (isEcall == 1'b1) begin
+      haltFlag <= 1'b1;
+    end
+    else haltFlag <= 1'b0;
+  end
+
 endmodule
