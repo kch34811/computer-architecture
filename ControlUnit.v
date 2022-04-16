@@ -10,6 +10,8 @@
 `define R_TYPE_COMPLETION 7
 `define BRANCH_COMPLETION 8
 `define HALT 9
+`define EXECUTION_IMM 10
+`define JUMP_IMM 11
 
 module ControlUnit (input [6:0] part_of_inst,
                     input clk,
@@ -29,42 +31,50 @@ module ControlUnit (input [6:0] part_of_inst,
                     output reg is_ecall
                     );
 
-    integer state;
+    reg [3:0] state;
 
     always @(posedge clk) begin
         if (reset) begin
-            state = `INST_FETCH;
+            state <= `INST_FETCH;
         end else begin
             if (state == `INST_FETCH) begin
-                state = `INST_DECODE_REG_FETCH;
+                state <= `INST_DECODE_REG_FETCH;
             end else if (state == `INST_DECODE_REG_FETCH) begin
                 if (part_of_inst == `LOAD || part_of_inst == `STORE) begin
-                    state = `MEM_ADDR_COMPUTATION;
+                    state <= `MEM_ADDR_COMPUTATION;
                 end else if (part_of_inst == `ARITHMETIC) begin
-                    state = `EXECUTION;
+                    state <= `EXECUTION;
                 end else if (part_of_inst == `BRANCH) begin
-                    state = `BRANCH_COMPLETION;
+                    state <= `BRANCH_COMPLETION;
                 end else if (part_of_inst == `ECALL) begin
-                    state = `HALT;
+                    state <= `HALT;
+                end else if (part_of_inst == `ARITHMETIC_IMM) begin
+                    state <= `EXECUTION_IMM;
+                end else if (part_of_inst == `JALR) begin
+                    state <= `JUMP_IMM;
                 end
             end else if(state == `MEM_ADDR_COMPUTATION) begin
                 if(part_of_inst == `LOAD) begin
-                    state = `MEM_ACCESS_READ;
+                    state <= `MEM_ACCESS_READ;
                 end else if(part_of_inst == `STORE) begin
-                    state = `MEM_ACCESS_WRITE;
+                    state <= `MEM_ACCESS_WRITE;
                 end
             end else if (state == `MEM_ACCESS_READ) begin
-                state = `WB_STEP;
+                state <= `WB_STEP;
             end else if (state == `MEM_ACCESS_WRITE) begin
-                state = `INST_FETCH;
+                state <= `INST_FETCH;
             end else if (state == `EXECUTION) begin
-                state = `R_TYPE_COMPLETION;
+                state <= `R_TYPE_COMPLETION;
             end else if (state == `R_TYPE_COMPLETION) begin
-                state = `INST_FETCH;
+                state <= `INST_FETCH;
             end else if (state == `BRANCH_COMPLETION) begin
-                state = `INST_FETCH;
+                state <= `INST_FETCH;
             end else if (state == `HALT) begin
-                state = `INST_FETCH;
+                state <= `INST_FETCH;
+            end else if (state == `EXECUTION_IMM) begin
+                state <= `INST_FETCH;
+            end else if (state == `JUMP_IMM) begin
+                state <= `INST_FETCH;
             end
         end
     end
@@ -88,6 +98,7 @@ module ControlUnit (input [6:0] part_of_inst,
             mem_read = 1'b1;
             ALU_src_b = 2'b01;
             PC_write = 1'b1;
+            IR_write = 1'b1;
         end else if (state == `INST_DECODE_REG_FETCH) begin
             ALU_src_b = 2'b10;
         end else if (state == `MEM_ADDR_COMPUTATION) begin
@@ -116,6 +127,12 @@ module ControlUnit (input [6:0] part_of_inst,
             PC_source = 1'b1;
         end else if (state == `HALT) begin
             is_ecall = 1'b1;
+        end else if (state == `ARITHMETIC_IMM) begin
+            ALU_src_a = 1'b1;
+            ALU_src_b = 2'b10;
+            ALU_op = 2'b1;
+        end else if (state == `JUMP_IMM) begin
+            ALU_src_b = 2'b10;
         end
     end
 

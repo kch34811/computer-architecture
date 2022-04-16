@@ -12,7 +12,7 @@
 `include "ALU.v"
 `include "ALUControlUnit.v"
 `include "ImmediateGenerator.v"
-`include "ControlUnit"
+`include "ControlUnit.v"
 `include "Memory.v"
 `include "ProgramCounter.v"
 `include "RegisterFile.v"
