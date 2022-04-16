@@ -142,11 +142,11 @@ module CPU(input reset,       // positive reset signal
     .alu_bcond(bcond)     // output
   );
 
-  MUX2_to_1 #(32) MUX1 (PCOut, ALUOut_wire, IorD, MUX1Out);
-  MUX2_to_1 #(32) MUX2 (ALUOut_wire, MDR_wire, MemtoReg, MUX2Out);
-  MUX2_to_1 #(32) MUX3 (PCOut, A_wire, ALUSrcA, MUX3Out);
-  MUX4_to_1 #(32) MUX4 (B_wire, 4, ImmGenOut, 0, ALUSrcB, MUX4Out);
-  MUX2_to_1 #(32) MUX5 (ALUResult, ALUOut_wire, PCSource, MUX5Out);
+  MUX2_to_1 MUX1 (PCOut, ALUOut_wire, IorD, MUX1Out);
+  MUX2_to_1 MUX2 (ALUOut_wire, MDR_wire, MemtoReg, MUX2Out);
+  MUX2_to_1 MUX3 (PCOut, A_wire, ALUSrcA, MUX3Out);
+  MUX4_to_1 MUX4 (B_wire, 4, ImmGenOut, 0, ALUSrcB, MUX4Out);
+  MUX2_to_1 MUX5 (ALUResult, ALUOut_wire, PCSource, MUX5Out);
 
   always @(posedge clk) begin
     if (reset) begin
