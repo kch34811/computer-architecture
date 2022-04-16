@@ -127,10 +127,11 @@ module ControlUnit (input [6:0] part_of_inst,
             PC_source = 1'b1;
         end else if (state == `HALT) begin
             is_ecall = 1'b1;
-        end else if (state == `ARITHMETIC_IMM) begin
+        end else if (state == `EXECUTION_IMM) begin
             ALU_src_a = 1'b1;
             ALU_src_b = 2'b10;
             ALU_op = 2'b1;
+            reg_write = 1'b1;
         end else if (state == `JUMP_IMM) begin
             ALU_src_b = 2'b10;
         end
