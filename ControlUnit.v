@@ -14,7 +14,7 @@
 module ControlUnit (input [6:0] part_of_inst,
                     input clk,
                     input reset,
-                    output reg PC_write_not_cond,
+                    output reg PC_write_cond,
                     output reg PC_write,
                     output reg i_or_d,
                     output reg mem_read,
@@ -70,7 +70,7 @@ module ControlUnit (input [6:0] part_of_inst,
     end
 
     always @(state) begin
-        PC_write_not_cond = 1'b0;
+        PC_write_cond = 1'b0;
         PC_write = 1'b0;
         i_or_d = 1'b0;
         mem_read = 1'b0;
@@ -112,7 +112,7 @@ module ControlUnit (input [6:0] part_of_inst,
             ALU_src_a = 1'b1;
             ALU_src_b = 2'b00;
             ALU_op = 2'b01;
-            PC_write_not_cond = 1'b1;
+            PC_write_cond = 1'b1;
             PC_source = 1'b1;
         end else if (state == `HALT) begin
             is_ecall = 1'b1;

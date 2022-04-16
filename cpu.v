@@ -12,7 +12,7 @@
 `include "ALU.v"
 `include "ALUControlUnit.v"
 `include "ImmediateGenerator.v"
-`include "ControlUnit"
+`include "ControlUnit.v"
 `include "Memory.v"
 `include "ProgramCounter.v"
 `include "RegisterFile.v"
@@ -36,7 +36,7 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] MUX4Out;
   wire [31:0] MUX5Out;
 
-  wire PCWriteNotCond;
+  wire PCWriteCond;
   wire PCWrite;
   wire IorD;
   wire MemRead;
@@ -80,7 +80,7 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),         // input
-    .PC_control((~becond & PCWriteNotCond) | PCWrite), // input
+    .PC_control((becond & PCWriteCond) | PCWrite), // input
     .next_pc(PCIn),     // input
     .current_pc(PCOut)   // output
   );
@@ -114,7 +114,7 @@ module CPU(input reset,       // positive reset signal
     .part_of_inst(IR_wire[6:0]), // input
     .clk(clk), // input
     .reset(reset), // input
-    .PC_write_not_cond(PCWriteNotCond), // output 
+    .PC_write_cond(PCWriteCond), // output 
     .PC_write(PCWrite), // output
     .i_or_d(IorD), // output
     .mem_read(MemRead), // output
