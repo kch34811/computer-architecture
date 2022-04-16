@@ -6,8 +6,8 @@ module ALUControlUnit (input [31:0] all_of_inst, input [1:0] alu_ctrl_op, output
     // reg [6:0] funct7 = all_of_inst[31:25];
     // reg [2:0] funct3 = all_of_inst[14:12];
 
-    always @(all_of_inst) begin
-        
+    always @(all_of_inst, alu_ctrl_op) begin
+        alu_op = 4'b0000;
         if (alu_ctrl_op == 2'b00) begin
             alu_op = 4'b0000;
         end else if (alu_ctrl_op == 2'b01) begin
@@ -35,7 +35,6 @@ module ALUControlUnit (input [31:0] all_of_inst, input [1:0] alu_ctrl_op, output
             `FUNCT3_SRL: alu_op = 4'b1011;
             endcase
         end else begin 
-
             if (all_of_inst[6:0] == `ARITHMETIC) begin
                 case(all_of_inst[14:12])
                 3'b000: alu_op = (all_of_inst[31:25] == `FUNCT7_SUB) ? 4'b0001 : 4'b0000;

@@ -61,6 +61,8 @@ module ControlUnit (input [6:0] part_of_inst,
                 end
             end else if (state == `MEM_ACCESS_READ) begin
                 state <= `WB_STEP;
+            end else if (state == `WB_STEP) begin
+                state <= `INST_FETCH;
             end else if (state == `MEM_ACCESS_WRITE) begin
                 state <= `INST_FETCH;
             end else if (state == `EXECUTION) begin
@@ -121,7 +123,7 @@ module ControlUnit (input [6:0] part_of_inst,
             reg_write = 1'b1;
         end else if (state == `BRANCH_COMPLETION) begin
             ALU_src_a = 1'b1;
-            ALU_src_b = 2'b00;
+            ALU_src_b = 2'b10;
             ALU_op = 2'b01;
             PC_write_cond = 1'b1;
             PC_source = 1'b1;
@@ -130,8 +132,7 @@ module ControlUnit (input [6:0] part_of_inst,
         end else if (state == `EXECUTION_IMM) begin
             ALU_src_a = 1'b1;
             ALU_src_b = 2'b10;
-            ALU_op = 2'b1;
-            reg_write = 1'b1;
+            ALU_op = 2'b10;
         end else if (state == `JUMP_IMM) begin
             ALU_src_b = 2'b10;
         end

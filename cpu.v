@@ -80,8 +80,8 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),         // input
-    .PC_control((becond & PCWriteCond) | PCWrite), // input
-    .next_pc(PCIn),     // input
+    .PC_control((bcond & PCWriteCond) | PCWrite), // input
+    .next_pc(MUX5Out),     // input
     .current_pc(PCOut)   // output
   );
 
@@ -144,9 +144,9 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- ALU ----------
   ALU alu(
-    .alu_op(ALUop),      // input
     .alu_in_1(MUX3Out),    // input  
-    .alu_in_2(MUX4Out),    // input
+    .alu_in_2(MUX4Out), 
+    .alu_op(ALUop),   // input
     .alu_result(ALUResult),  // output
     .alu_bcond(bcond)     // output
   );
