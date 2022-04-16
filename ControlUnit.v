@@ -9,6 +9,7 @@
 `define EXECUTION 6
 `define R_TYPE_COMPLETION 7
 `define BRANCH_COMPLETION 8
+`define HALT 9
 
 module ControlUnit (input [6:0] part_of_inst,
                     input clk,
@@ -43,6 +44,8 @@ module ControlUnit (input [6:0] part_of_inst,
                     state = `EXECUTION;
                 end else if (part_of_inst == `BRANCH) begin
                     state = `BRANCH_COMPLETION;
+                end else if (part_of_inst == `ECALL) begin
+                    state = `HALT;
                 end
             end else if(state == `MEM_ADDR_COMPUTATION) begin
                 if(part_of_inst == `LOAD) begin
@@ -59,6 +62,8 @@ module ControlUnit (input [6:0] part_of_inst,
             end else if (state == `R_TYPE_COMPLETION) begin
                 state = `INST_FETCH;
             end else if (state == `BRANCH_COMPLETION) begin
+                state = `INST_FETCH;
+            end else if (state == `HALT) begin
                 state = `INST_FETCH;
             end
         end
@@ -109,6 +114,8 @@ module ControlUnit (input [6:0] part_of_inst,
             ALU_op = 2'b01;
             PC_write_no_cond = 1'b1;
             PC_source = 1'b1;
+        end else if (state == `HALT) begin
+            is_ecall = 1'b1;
         end
     end
 
