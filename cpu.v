@@ -42,11 +42,11 @@ module CPU(input reset,       // positive reset signal
   wire RegWrite;
   wire bcond;
 
-  wire IR_wire;
-  wire MDR_wire;
-  wire A_wire;
-  wire B_wire;
-  wire ALUOut_wire;
+  wire [31:0] IR_wire;
+  wire [31:0] MDR_wire;
+  wire [31:0] A_wire;
+  wire [31:0] B_wire;
+  wire [31:0] ALUOut_wire;
 
   wire isEcall;
   //wire [31:0] x17;
