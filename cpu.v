@@ -7,6 +7,15 @@
 // (e.g., port declarations, remove modules, define new modules, ...)
 // 3. You might need to describe combinational logics to drive them into the module (e.g., mux, and, or, ...)
 // 4. `include files if required
+`include "2to1MUX.v"
+`include "4to1MUX.v"
+`include "ALU.v"
+`include "ALUControlUnit.v"
+`include "ImmediateGenerator.v"
+`include "ControlUnit"
+`include "Memory.v"
+`include "ProgramCounter.v"
+`include "RegisterFile.v"
 
 module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
