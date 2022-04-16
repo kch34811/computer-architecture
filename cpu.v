@@ -126,7 +126,8 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit(
-    .part_of_inst(IR_wire[31:0]),  // input
+    .part_of_inst(IR_wire[31:0]), // input
+    .alu_ctrl_op(),  // input
     .alu_op(ALUop)         // output
   );
 
