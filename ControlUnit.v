@@ -112,7 +112,7 @@ module ControlUnit (input [6:0] part_of_inst,
             ALU_src_a = 1'b1;
             ALU_src_b = 2'b00;
             ALU_op = 2'b01;
-            PC_write_no_cond = 1'b1;
+            PC_write_not_cond = 1'b1;
             PC_source = 1'b1;
         end else if (state == `HALT) begin
             is_ecall = 1'b1;
