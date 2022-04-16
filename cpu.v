@@ -35,6 +35,7 @@ module CPU(input reset,       // positive reset signal
   wire MemtoReg;
   wire IRWrite;
   wire PCSource;
+  wire [1:0] ALUCtrlop;
   wire [3:0] ALUop;
   wire ALUSrcB;
   wire ALUSrcA;
@@ -112,7 +113,7 @@ module CPU(input reset,       // positive reset signal
     .mem_to_reg(MemtoReg), // output
     .IR_write(IRWrite), // output
     .PC_source(PCSource), // output
-    .ALU_op(ALUop), // output 2bit
+    .ALU_op(ALUCtrlop), // output 2bit
     .ALU_src_a(ALUSrcA), // output
     .ALU_src_b(ALUSrcB), // output 2bit
     .reg_write(RegWrite), // output
@@ -128,7 +129,7 @@ module CPU(input reset,       // positive reset signal
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit(
     .part_of_inst(IR_wire[31:0]), // input
-    .alu_ctrl_op(),  // input
+    .alu_ctrl_op(ALUCtrlop),  // input
     .alu_op(ALUop)         // output
   );
 
