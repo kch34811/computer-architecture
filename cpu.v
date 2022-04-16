@@ -100,17 +100,22 @@ module CPU(input reset,       // positive reset signal
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit(
-    .part_of_inst(IR_wire[6:0]),  // input
-    .is_jal(),        // output
-    .is_jalr(),       // output
-    .branch(),        // output
-    .mem_read(),      // output
-    .mem_to_reg(),    // output
-    .mem_write(),     // output
-    .alu_src(),       // output
-    .write_enable(),     // output
-    .pc_to_reg(),     // output
-    .is_ecall()       // output (ecall inst)
+    .part_of_inst(), // input
+    .clk(), // input
+    .reset(), // input
+    .PC_write_not_cond(), // output 
+    .PC_write(), // output
+    .i_or_d(), // output
+    .mem_read(), // output
+    .mem_write(), // output
+    .mem_to_reg(), // output
+    .IR_write(), // output
+    .PC_source(), // output
+    .ALU_op(), // output 2bit
+    .ALU_src_a(), // output
+    .ALU_src_b(), // output 2bit
+    .reg_write(), // output
+    .is_ecall() // output
   );
 
   // ---------- Immediate Generator ----------
