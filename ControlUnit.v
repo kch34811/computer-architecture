@@ -72,7 +72,7 @@ module ControlUnit (input [6:0] part_of_inst,
             end else if (state == `HALT) begin
                 state <= `INST_FETCH;
             end else if (state == `EXECUTION_IMM) begin
-                state <= `INST_FETCH;
+                state <= `R_TYPE_COMPLETION;
             end else if (state == `JUMP_IMM) begin
                 state <= `INST_FETCH;
             end
