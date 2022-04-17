@@ -17,6 +17,7 @@
 module ControlUnit (input [6:0] part_of_inst,
                     input clk,
                     input reset,
+                    input [6:0] MemData,
                     output reg PC_write_cond,
                     output reg PC_write,
                     output reg i_or_d,
@@ -39,11 +40,7 @@ module ControlUnit (input [6:0] part_of_inst,
             state <= `INST_FETCH;
         end else begin
             if (state == `INST_FETCH) begin
-                if (part_of_inst == `JAL) begin
-                    state <= `JUMP_IMM;
-                end else begin
                     state <= `INST_DECODE_REG_FETCH;
-                end
             end else if (state == `INST_DECODE_REG_FETCH) begin
                 if (part_of_inst == `LOAD || part_of_inst == `STORE) begin
                     state <= `MEM_ADDR_COMPUTATION;
@@ -81,8 +78,6 @@ module ControlUnit (input [6:0] part_of_inst,
             end else if (state == `EXECUTION_IMM) begin
                 state <= `R_TYPE_COMPLETION;
             end else if (state == `JUMP_IMM) begin
-                state <= `JUMP_IMM_EXEXTUTION;
-            end else if (state == `JUMP_IMM_EXEXTUTION) begin
                 state <= `INST_FETCH;
             end
         end
@@ -106,10 +101,20 @@ module ControlUnit (input [6:0] part_of_inst,
         if (state == `INST_FETCH) begin
             mem_read = 1'b1;
             ALU_src_b = 2'b01;
-            PC_write = 1'b1;
+            if(MemData ==`JAL) begin
+                PC_write = 1'b0;
+                reg_write = 1'b1;
+                $display("jal");
+            end else begin
+                PC_write = 1'b1;
+                $display("jal !");
+            end
             IR_write = 1'b1;
         end else if (state == `INST_DECODE_REG_FETCH) begin
-            ALU_src_b = 2'b10; 
+            ALU_src_b = 2'b10;
+            //if(part_of_inst == `JAL) begin
+                //reg_write = 1'b1;
+            //end
         end else if (state == `MEM_ADDR_COMPUTATION) begin
             ALU_src_a = 1'b1;
             ALU_src_b = 2'b10;
@@ -142,10 +147,7 @@ module ControlUnit (input [6:0] part_of_inst,
             ALU_op = 2'b10;
         end else if (state == `JUMP_IMM) begin
             ALU_src_b = 2'b01;
-            reg_write = 1'b1;
-        end else if (state == `JUMP_IMM_EXEXTUTION) begin
-            ALU_src_a = 1'b0;
-            ALU_src_b = 2'b10;
+            PC_source = 1'b1;
         end
     end
 

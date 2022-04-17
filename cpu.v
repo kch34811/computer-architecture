@@ -114,6 +114,7 @@ module CPU(input reset,       // positive reset signal
     .part_of_inst(IR_wire[6:0]), // input
     .clk(clk), // input
     .reset(reset), // input
+    .MemData(MemData[6:0]), //input
     .PC_write_cond(PCWriteCond), // output 
     .PC_write(PCWrite), // output
     .i_or_d(IorD), // output
