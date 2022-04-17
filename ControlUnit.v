@@ -12,6 +12,7 @@
 `define HALT 9
 `define EXECUTION_IMM 10
 `define JUMP_IMM 11
+`define JUMP_IMM_EXEXTUTION 12
 
 module ControlUnit (input [6:0] part_of_inst,
                     input clk,
@@ -38,7 +39,7 @@ module ControlUnit (input [6:0] part_of_inst,
             state <= `INST_FETCH;
         end else begin
             if (state == `INST_FETCH) begin
-                if (part_of_inst == `JAR) begin
+                if (part_of_inst == `JAL) begin
                     state <= `JUMP_IMM;
                 end else begin
                     state <= `INST_DECODE_REG_FETCH;
@@ -54,6 +55,8 @@ module ControlUnit (input [6:0] part_of_inst,
                     state <= `HALT;
                 end else if (part_of_inst == `ARITHMETIC_IMM || part_of_inst == `JALR) begin
                     state <= `EXECUTION_IMM;
+                end else if (part_of_inst == `JAL) begin
+                    state <= `JUMP_IMM;
                 end
             end else if(state == `MEM_ADDR_COMPUTATION) begin
                 if(part_of_inst == `LOAD) begin
@@ -78,7 +81,9 @@ module ControlUnit (input [6:0] part_of_inst,
             end else if (state == `EXECUTION_IMM) begin
                 state <= `R_TYPE_COMPLETION;
             end else if (state == `JUMP_IMM) begin
-                state <= `WB_STEP;
+                state <= `JUMP_IMM_EXEXTUTION;
+            end else if (state == `JUMP_IMM_EXEXTUTION) begin
+                state <= `INST_FETCH;
             end
         end
     end
@@ -136,6 +141,10 @@ module ControlUnit (input [6:0] part_of_inst,
             ALU_src_b = 2'b10;
             ALU_op = 2'b10;
         end else if (state == `JUMP_IMM) begin
+            ALU_src_b = 2'b01;
+            reg_write = 1'b1;
+        end else if (state == `JUMP_IMM_EXEXTUTION) begin
+            ALU_src_a = 1'b0;
             ALU_src_b = 2'b10;
         end
     end
