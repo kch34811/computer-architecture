@@ -106,52 +106,52 @@ module ControlUnit (input [6:0] part_of_inst,
         is_ecall = 1'b0;
 
         if (state == `INST_FETCH) begin
-            mem_read <= 1'b1;
-            ALU_src_b <= 2'b01;
-            IR_write <= 1'b1;
+            mem_read = 1'b1;
+            ALU_src_b = 2'b01;
+            IR_write = 1'b1;
         end else if (state == `INST_DECODE_REG_FETCH) begin
-            ALU_src_b <= 2'b10;
+            ALU_src_b = 2'b10;
             PC_write = 1'b1;
             PC_source = 1'b1; 
         end else if (state == `MEM_ADDR_COMPUTATION) begin
-            ALU_src_a <= 1'b1;
-            ALU_src_b <= 2'b10;
+            ALU_src_a = 1'b1;
+            ALU_src_b = 2'b10;
         end else if (state == `MEM_ACCESS_READ) begin
-            mem_read <= 1'b1;
-            i_or_d <= 1'b1;
+            mem_read = 1'b1;
+            i_or_d = 1'b1;
         end else if (state == `WB_STEP) begin
-            reg_write <= 1'b1;
-            mem_to_reg <= 1'b1;
+            reg_write = 1'b1;
+            mem_to_reg = 1'b1;
         end else if (state == `MEM_ACCESS_WRITE) begin
-            mem_write <= 1'b1;
-            i_or_d <= 1'b1;
+            mem_write = 1'b1;
+            i_or_d = 1'b1;
         end else if (state == `EXECUTION) begin
-            ALU_src_a <= 1'b1;
-            ALU_src_b <= 2'b00;
-            ALU_op <= 2'b10;
+            ALU_src_a = 1'b1;
+            ALU_src_b = 2'b00;
+            ALU_op = 2'b10;
         end else if (state == `R_TYPE_COMPLETION) begin
-            reg_write <= 1'b1;
+            reg_write = 1'b1;
         end else if (state == `BRANCH_COMPLETION) begin
-            ALU_src_a <= 1'b1;
-            ALU_src_b <= 2'b00;
-            ALU_op <= 2'b01;
-            PC_write_cond <= 1'b1;
-            PC_source <= 1'b1;
+            ALU_src_a = 1'b1;
+            ALU_src_b = 2'b00;
+            ALU_op = 2'b01;
+            PC_write_cond = 1'b1;
+            PC_source = 1'b1;
         end else if (state == `HALT) begin
-            is_ecall <= 1'b1;
+            is_ecall = 1'b1;
         end else if (state == `EXECUTION_IMM) begin
-            ALU_src_a <= 1'b1;
-            ALU_src_b <= 2'b10;
-            ALU_op <= 2'b10;
+            ALU_src_a = 1'b1;
+            ALU_src_b = 2'b10;
+            ALU_op = 2'b10;
         end else if (state == `JUMP_IMM) begin
-            ALU_src_b <= 2'b10;
-            PC_write <= 1'b1;
-            reg_write <= 1'b1;
+            ALU_src_b = 2'b10;
+            PC_write = 1'b1;
+            reg_write = 1'b1;
         end else if (state == `JUMP_IMM_EXEXTUTION) begin
-            ALU_src_a <= 1'b1;
-            ALU_src_b <= 2'b10;
-            ALU_op <= 2'b10;
-            PC_write <= 1'b1;
+            ALU_src_a = 1'b1;
+            ALU_src_b = 2'b10;
+            ALU_op = 2'b10;
+            PC_write = 1'b1;
         end
     end
 
