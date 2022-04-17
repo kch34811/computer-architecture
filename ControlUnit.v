@@ -55,12 +55,11 @@ module ControlUnit (input [6:0] part_of_inst,
                     state <= `BRANCH_COMPLETION;
                 end else if (part_of_inst == `ECALL) begin
                     state <= `HALT;
-                end else if (part_of_inst == `ARITHMETIC_IMM || part_of_inst == `JALR) begin
+                end else if (part_of_inst == `ARITHMETIC_IMM) begin
                     state <= `EXECUTION_IMM;
-                end 
-                //else if (part_of_inst == `JAL) begin
-                    //state <= `JUMP_IMM;
-                //end
+                end else if (part_of_inst == `JALR) begin
+                    state <= `JUMP_IMM_EXEXTUTION;
+                end
             end else if(state == `MEM_ADDR_COMPUTATION) begin
                 if(part_of_inst == `LOAD) begin
                     state <= `MEM_ACCESS_READ;
@@ -85,6 +84,8 @@ module ControlUnit (input [6:0] part_of_inst,
                 state <= `R_TYPE_COMPLETION;
             end else if (state == `JUMP_IMM) begin
                 state <= `INST_FETCH;
+            end else if (state == `JUMP_IMM_EXEXTUTION) begin
+                state <= `R_TYPE_COMPLETION;
             end
         end
     end
@@ -144,6 +145,12 @@ module ControlUnit (input [6:0] part_of_inst,
             ALU_op <= 2'b10;
         end else if (state == `JUMP_IMM) begin
             ALU_src_b <= 2'b10;
+            PC_write <= 1'b1;
+            reg_write <= 1'b1;
+        end else if (state == `JUMP_IMM_EXEXTUTION) begin
+            ALU_src_a <= 1'b1;
+            ALU_src_b <= 2'b10;
+            ALU_op <= 2'b10;
             PC_write <= 1'b1;
         end
     end
