@@ -73,13 +73,13 @@ module ALUControlUnit (input [31:0] all_of_inst, input [1:0] alu_ctrl_op, output
 
             if (all_of_inst[6:0] == `BRANCH) begin
                 case(all_of_inst[14:12])
-                `FUNCT3_ADD: alu_op = 4'b0000;
+                `FUNCT3_BEQ: alu_op = 4'b0000;
 
-                `FUNCT3_SLL: alu_op = 4'b1010;
+                `FUNCT3_BNE: alu_op = 4'b1010;
 
-                `FUNCT3_XOR: alu_op = 4'b1000;
+                `FUNCT3_BLT: alu_op = 4'b1000;
 
-                `FUNCT3_SRL: alu_op = 4'b1011;
+                `FUNCT3_BGE: alu_op = 4'b1011;
                 endcase
             end
         end

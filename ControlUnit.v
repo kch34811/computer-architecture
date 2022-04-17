@@ -38,7 +38,11 @@ module ControlUnit (input [6:0] part_of_inst,
             state <= `INST_FETCH;
         end else begin
             if (state == `INST_FETCH) begin
-                state <= `INST_DECODE_REG_FETCH;
+                if (part_of_inst == `JAR) begin
+                    state <= `JUMP_IMM;
+                end else begin
+                    state <= `INST_DECODE_REG_FETCH;
+                end
             end else if (state == `INST_DECODE_REG_FETCH) begin
                 if (part_of_inst == `LOAD || part_of_inst == `STORE) begin
                     state <= `MEM_ADDR_COMPUTATION;
@@ -48,10 +52,8 @@ module ControlUnit (input [6:0] part_of_inst,
                     state <= `BRANCH_COMPLETION;
                 end else if (part_of_inst == `ECALL) begin
                     state <= `HALT;
-                end else if (part_of_inst == `ARITHMETIC_IMM) begin
+                end else if (part_of_inst == `ARITHMETIC_IMM || part_of_inst == `JALR) begin
                     state <= `EXECUTION_IMM;
-                end else if (part_of_inst == `JALR) begin
-                    state <= `JUMP_IMM;
                 end
             end else if(state == `MEM_ADDR_COMPUTATION) begin
                 if(part_of_inst == `LOAD) begin
@@ -76,7 +78,7 @@ module ControlUnit (input [6:0] part_of_inst,
             end else if (state == `EXECUTION_IMM) begin
                 state <= `R_TYPE_COMPLETION;
             end else if (state == `JUMP_IMM) begin
-                state <= `INST_FETCH;
+                state <= `WB_STEP;
             end
         end
     end
@@ -102,7 +104,7 @@ module ControlUnit (input [6:0] part_of_inst,
             PC_write = 1'b1;
             IR_write = 1'b1;
         end else if (state == `INST_DECODE_REG_FETCH) begin
-            ALU_src_b = 2'b10;
+            ALU_src_b = 2'b10; 
         end else if (state == `MEM_ADDR_COMPUTATION) begin
             ALU_src_a = 1'b1;
             ALU_src_b = 2'b10;
@@ -123,7 +125,7 @@ module ControlUnit (input [6:0] part_of_inst,
             reg_write = 1'b1;
         end else if (state == `BRANCH_COMPLETION) begin
             ALU_src_a = 1'b1;
-            ALU_src_b = 2'b10;
+            ALU_src_b = 2'b00;
             ALU_op = 2'b01;
             PC_write_cond = 1'b1;
             PC_source = 1'b1;

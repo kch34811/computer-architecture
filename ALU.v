@@ -49,7 +49,7 @@ always @* begin
                  alu_result = alu_in_1 >> alu_in_2;
                  alu_bcond = (alu_in_1 >= alu_in_2) ? 1 : 0;
             end
-		4'b1100: alu_result = alu_in_1 <<< 1;
+		4'b1100: alu_result = alu_in_1 << 1;
 		4'b1101: 
 			begin
 				alu_result = alu_in_1 >> 1;
