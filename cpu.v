@@ -218,7 +218,7 @@ module CPU(input reset,       // positive reset signal
     end
   end
 
-  MUX2_to_1 MUX1 (ID_EX_rs2_data, ID_EX_imm, ID_EX_alu_src, MUX1Out);
+  MUX2_to_1 MUX1 (MUX4Out, ID_EX_imm, ID_EX_alu_src, MUX1Out);
 
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit (
@@ -230,7 +230,7 @@ module CPU(input reset,       // positive reset signal
   ALU alu (
     .alu_op(ALUop),      // input
     .alu_in_1(MUX3Out),    // input  
-    .alu_in_2(MUX4Out),    // input
+    .alu_in_2(MUX1Out),    // input
     .alu_result(ALUResult)  // output
     //.alu_zero()     // output
   );
@@ -247,7 +247,7 @@ module CPU(input reset,       // positive reset signal
   );
 
   MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs1_op, MUX3Out);
-  MUX4_to_1 MUX4 (MUX1Out, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs2_op, MUX4Out);
+  MUX4_to_1 MUX4 (ID_EX_rs2_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs2_op, MUX4Out);
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
@@ -269,7 +269,7 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_is_ecall <= ID_EX_is_ecall;
       // From others
       EX_MEM_alu_out <= ALUResult;
-      EX_MEM_dmem_data <= ID_EX_rs2_data;
+      EX_MEM_dmem_data <= MUX4Out;
       EX_MEM_rd <= ID_EX_rd;
     end
   end
