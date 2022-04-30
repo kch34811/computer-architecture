@@ -3,156 +3,164 @@
 
 // Guidelines
 // 1. It is highly recommened to `define opcodes and something useful.
-// 2. You can modify the module.
+// 2. You can modify modules (except InstMemory, DataMemory, and RegisterFile)
 // (e.g., port declarations, remove modules, define new modules, ...)
 // 3. You might need to describe combinational logics to drive them into the module (e.g., mux, and, or, ...)
 // 4. `include files if required
 
-`include "2to1MUX.v"
-`include "Adder.v"
-`include "ALU.v"
-`include "ALUControlUnit.v"
-`include "ImmediateGenerator.v"
-`include "Memory.v"
-`include "ProgramCounter.v"
-`include "RegisterFile.v"
-
 module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
-
   /***** Wire declarations *****/
-
-  wire [31:0] PCOut;
-  wire [31:0] PCIn;
-  wire [31:0] InstMemOut;
-  wire [31:0] rs1_dout;
-  wire [31:0] rs2_dout;
-  wire [31:0] ALUIn;
-  wire [31:0] ALUResult;
-  wire [31:0] ImmGenOut;
-  wire [31:0] PCAdderOut1;
-  wire [31:0] PCAdderOut2;
-  wire [31:0] PCAdderMuxOut;
-  wire [31:0] DataMemOut;
-  wire [31:0] DataMemMuxOut;
-  wire [31:0] RegData;
-
   /***** Register declarations *****/
+  // You need to modify the width of registers
+  // In addition, 
+  // 1. You might need other pipeline registers that are not described below
+  // 2. You might not need registers described below
+  /***** IF/ID pipeline registers *****/
+  reg IF_ID_inst;           // will be used in ID stage
+  /***** ID/EX pipeline registers *****/
+  // From the control unit
+  reg ID_EX_alu_op;         // will be used in EX stage
+  reg ID_EX_alu_src;        // will be used in EX stage
+  reg ID_EX_mem_write;      // will be used in MEM stage
+  reg ID_EX_mem_read;       // will be used in MEM stage
+  reg ID_EX_mem_to_reg;     // will be used in WB stage
+  reg ID_EX_reg_write;      // will be used in WB stage
+  // From others
+  reg ID_EX_rs1_data;
+  reg ID_EX_rs2_data;
+  reg ID_EX_imm;
+  reg ID_EX_ALU_ctrl_unit_input;
+  reg ID_EX_rd;
 
-  wire JAL;
-  wire JALR;
-  wire branch;
-  wire bcond;
-  wire AluSrc;
-  wire RegWrite;
-  wire MemWrite;
-  wire MemToReg;
-  wire MemRead;
-  wire PCToReg;
-  wire [3:0] ALUop;
-  wire isEcall;
-  wire [31:0] x17;
-  reg haltFlag;
+  /***** EX/MEM pipeline registers *****/
+  // From the control unit
+  reg EX_MEM_mem_write;     // will be used in MEM stage
+  reg EX_MEM_mem_read;      // will be used in MEM stage
+  reg EX_MEM_is_branch;     // will be used in MEM stage
+  reg EX_MEM_mem_to_reg;    // will be used in WB stage
+  reg EX_MEM_reg_write;     // will be used in WB stage
+  // From others
+  reg EX_MEM_alu_out;
+  reg EX_MEM_dmem_data;
+  reg EX_MEM_rd;
+
+  /***** MEM/WB pipeline registers *****/
+  // From the control unit
+  reg MEM_WB_mem_to_reg;    // will be used in WB stage
+  reg MEM_WB_reg_write;     // will be used in WB stage
+  // From others
+  reg MEM_WB_mem_to_reg_src_1;
+  reg MEM_WB_mem_to_reg_src_2;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
   PC pc(
-    .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
-    .clk(clk),         // input
-    .next_pc(PCIn),     // input
-    .current_pc(PCOut)   // output
+    .reset(),       // input (Use reset to initialize PC. Initial value must be 0)
+    .clk(),         // input
+    .next_pc(),     // input
+    .current_pc()   // output
   );
   
   // ---------- Instruction Memory ----------
   InstMemory imem(
-    .reset(reset),   // input
-    .clk(clk),     // input
-    .addr(PCOut),    // input
-    .dout(InstMemOut)     // output
+    .reset(),   // input
+    .clk(),     // input
+    .addr(),    // input
+    .dout()     // output
   );
+
+  // Update IF/ID pipeline registers here
+  always @(posedge clk) begin
+    if (reset) begin
+    end
+    else begin
+    end
+  end
 
   // ---------- Register File ----------
   RegisterFile reg_file (
-    .reset (reset),        // input
-    .clk (clk),          // input
-    .rs1 (InstMemOut[19:15]),          // input
-    .rs2 (InstMemOut[24:20]),          // input
-    .rd (InstMemOut[11:7]),           // input
-    .rd_din (RegData),       // input
-    .write_enable (RegWrite),    // input
-    .rs1_dout (rs1_dout),     // output
-    .rs2_dout (rs2_dout),      // output
-    .x17 (x17)
+    .reset (),        // input
+    .clk (),          // input
+    .rs1 (),          // input
+    .rs2 (),          // input
+    .rd (),           // input
+    .rd_din (),       // input
+    .write_enable (),    // input
+    .rs1_dout (),     // output
+    .rs2_dout ()      // output
   );
 
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
-    .part_of_inst(InstMemOut[6:0]),  // input
-    .is_jal(JAL),        // output
-    .is_jalr(JALR),       // output
-    .branch(branch),        // output
-    .mem_read(MemRead),      // output
-    .mem_to_reg(MemToReg),    // output
-    .mem_write(MemWrite),     // output
-    .alu_src(AluSrc),       // output
-    .write_enable(RegWrite),     // output
-    .pc_to_reg(PCToReg),     // output
-    .is_ecall(isEcall)       // output (ecall inst)
+    .part_of_inst(),  // input
+    .mem_read(),      // output
+    .mem_to_reg(),    // output
+    .mem_write(),     // output
+    .alu_src(),       // output
+    .write_enable(),  // output
+    .pc_to_reg(),     // output
+    .alu_op(),        // output
+    .is_ecall()       // output (ecall inst)
   );
 
   // ---------- Immediate Generator ----------
   ImmediateGenerator imm_gen(
-    .part_of_inst(InstMemOut[31:0]),  // input
-    .imm_gen_out(ImmGenOut)    // output
+    .part_of_inst(),  // input
+    .imm_gen_out()    // output
   );
+
+  // Update ID/EX pipeline registers here
+  always @(posedge clk) begin
+    if (reset) begin
+    end
+    else begin
+    end
+  end
 
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit (
-    .all_of_inst(InstMemOut[31:0]),  // input
-    .alu_op(ALUop)         // output
+    .part_of_inst(),  // input
+    .alu_op()         // output
   );
 
   // ---------- ALU ----------
   ALU alu (
-    .alu_op(ALUop),      // input
-    .alu_in_1(rs1_dout),    // input  
-    .alu_in_2(ALUIn),    // input
-    .alu_result(ALUResult),  // output
-    .alu_bcond(bcond)     // output
+    .alu_op(),      // input
+    .alu_in_1(),    // input  
+    .alu_in_2(),    // input
+    .alu_result(),  // output
+    .alu_zero()     // output
   );
+
+  // Update EX/MEM pipeline registers here
+  always @(posedge clk) begin
+    if (reset) begin
+    end
+    else begin
+    end
+  end
 
   // ---------- Data Memory ----------
   DataMemory dmem(
-    .reset (reset),      // input
-    .clk (clk),        // input
-    .addr (ALUResult),       // input
-    .din (rs2_dout),        // input
-    .mem_read (MemRead),   // input
-    .mem_write (MemWrite),  // input
-    .dout (DataMemOut)        // output
+    .reset (),      // input
+    .clk (),        // input
+    .addr (),       // input
+    .din (),        // input
+    .mem_read (),   // input
+    .mem_write (),  // input
+    .dout ()        // output
   );
 
-  Adder #(32) PCAdder1 (PCOut, 4, PCAdderOut1);
-  Adder #(32) PCAdder2 (PCOut, ImmGenOut, PCAdderOut2);
-
-  MUX2_to_1 #(32) PCAdderMux1 (PCAdderOut1, PCAdderOut2, ((branch & bcond) | JAL), PCAdderMuxOut);
-  MUX2_to_1 #(32) PCAdderMux2 (PCAdderMuxOut, ALUResult, JALR, PCIn);
-
-  MUX2_to_1 #(32) ALUInputMux (rs2_dout, ImmGenOut, AluSrc, ALUIn);
-
-  MUX2_to_1 #(32) DataMemMux (ALUResult, DataMemOut, MemToReg, DataMemMuxOut);
-
-  MUX2_to_1 #(32) WriteDataMux (DataMemMuxOut, PCAdderOut1, PCToReg, RegData);
-
-  assign is_halted = haltFlag;
-
-  always @(*) begin
-    if (isEcall == 1'b1 && x17 == 10) begin
-      haltFlag <= 1'b1;
+  // Update MEM/WB pipeline registers here
+  always @(posedge clk) begin
+    if (reset) begin
     end
-    else haltFlag <= 1'b0;
+    else begin
+    end
   end
 
+  
 endmodule

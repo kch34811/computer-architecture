@@ -27,7 +27,6 @@ module top;
     #5 clk = ~clk;
   end
 
-  integer j;
   // Calculate total cycle
   always @(posedge clk) begin
     total_cycle <= total_cycle + 1;
