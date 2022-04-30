@@ -45,6 +45,9 @@ module CPU(input reset,       // positive reset signal
   wire rs1_op;
   wire rs2_op;
 
+  wire PCWrite;
+  wire IF_ID_Write;
+
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -100,7 +103,8 @@ module CPU(input reset,       // positive reset signal
   // PC must be updated on the rising edge (positive edge) of the clock.
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
-    .clk(clk),         // input
+    .clk(clk),
+    .PC_control (PCWrite),        // input
     .next_pc(PCIn),     // input
     .current_pc(PCOut)   // output
   );
@@ -192,11 +196,6 @@ module CPU(input reset,       // positive reset signal
         ID_EX_mem_read <= 0;       // will be used in MEM stage
         ID_EX_mem_to_reg <= 0;    // will be used in WB stage
         ID_EX_reg_write <= 0;
-        ID_EX_rs1_data <= 0;
-        ID_EX_rs2_data <= 0;
-        ID_EX_imm <= 0;
-        ID_EX_ALU_ctrl_unit_input <= 0;
-        ID_EX_rd <= 0;
       end else begin
         // From the control unit
         ID_EX_alu_src <= AluSrc;      // will be used in EX stage
