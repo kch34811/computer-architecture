@@ -187,7 +187,8 @@ module CPU(input reset,       // positive reset signal
   );
 
   EcallDetection ecall_detection(
-    .rd (ID_EX_rd),
+    .rd1 (ID_EX_rd),
+    .rd2 (EX_MEM_rd),
     .isEcall (isEcall),
     .ecall_op (ecallOp)
   );
@@ -211,12 +212,12 @@ module CPU(input reset,       // positive reset signal
     end
     else begin
       // From the control unit
-      ID_EX_alu_src <= (ControlOp || ecallOp) ? 0 : AluSrc;      // will be used in EX stage
-      ID_EX_mem_write <= (ControlOp || ecallOp) ? 0 : MemWrite;      // will be used in MEM stage
-      ID_EX_mem_read <= (ControlOp || ecallOp) ? 0 : MemRead;       // will be used in MEM stage
-      ID_EX_mem_to_reg <= (ControlOp || ecallOp) ? 0 : MemToReg;    // will be used in WB stage
-      ID_EX_reg_write <= (ControlOp || ecallOp) ? 0 : RegWrite;
-      ID_EX_is_ecall <= ((rs1_dout == 32'b1010) && isEcall);
+      ID_EX_alu_src <= ControlOp ? 0 : AluSrc;      // will be used in EX stage
+      ID_EX_mem_write <= ControlOp ? 0 : MemWrite;      // will be used in MEM stage
+      ID_EX_mem_read <= ControlOp ? 0 : MemRead;       // will be used in MEM stage
+      ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
+      ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
+      ID_EX_is_ecall <= (rs1_dout == 32'b1010) && isEcall;
       // From others
       ID_EX_rs1_data <= MUX6Out;
       ID_EX_rs2_data <= MUX7Out;
@@ -270,10 +271,10 @@ module CPU(input reset,       // positive reset signal
     end
     else begin
       // From the control unit
-      EX_MEM_mem_write <= ID_EX_mem_write;     // will be used in MEM stage
-      EX_MEM_mem_read <= ID_EX_mem_read;      // will be used in MEM stage
-      EX_MEM_mem_to_reg <= ID_EX_mem_to_reg;    // will be used in WB stage
-      EX_MEM_reg_write <= ID_EX_reg_write;     // will be used in WB stage
+      EX_MEM_mem_write <= ecallOp ? 0 : ID_EX_mem_write;     // will be used in MEM stage
+      EX_MEM_mem_read <= ecallOp ? 0 : ID_EX_mem_read;      // will be used in MEM stage
+      EX_MEM_mem_to_reg <= ecallOp ? 0 : ID_EX_mem_to_reg;    // will be used in WB stage
+      EX_MEM_reg_write <= ecallOp ? 0 : ID_EX_reg_write;     // will be used in WB stage
       EX_MEM_is_ecall <= ID_EX_is_ecall;
       // From others
       EX_MEM_alu_out <= ALUResult;
