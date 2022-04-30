@@ -36,9 +36,14 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] MUX3Out;
   wire [31:0] MUX4Out;
   wire [4:0] MUX5Out;
+  wire [31:0] MUX6Out;
+  wire [31:0] MUX7Out;
 
   wire [1:0] forward_rs1_op;
   wire [1:0] forward_rs2_op;
+
+  wire rs1_op;
+  wire rs2_op;
 
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -135,6 +140,14 @@ module CPU(input reset,       // positive reset signal
     .rs2_dout (rs2_dout)      // output
   );
 
+  MUX_CONTROL mux_control (
+    .rs1 (MUX5Out),
+    .rs2 (IF_ID_inst),
+    .rd (MEM_WB_rd),
+    .rs1_op (rs1_op),
+    .rs2_op (rs2_op)
+  );
+
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
@@ -155,6 +168,9 @@ module CPU(input reset,       // positive reset signal
     .imm_gen_out(ImmGenOut)    // output
   );
 
+  MUX2_to_1 MUX6 (rs1_dout, MUX2Out, rs1_op, MUX6Out);
+  MUX2_to_1 MUX7 (rs2_dout, MUX2Out, rs2_op, MUX7Out);
+
   // Update ID/EX pipeline registers here
   always @(posedge clk) begin
     if (reset) begin
@@ -169,20 +185,33 @@ module CPU(input reset,       // positive reset signal
       ID_EX_ALU_ctrl_unit_input <= 0;
       ID_EX_rd <= 0;
     end
-    else begin
-      // From the control unit
-      ID_EX_alu_src <= AluSrc;      // will be used in EX stage
-      ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
-      ID_EX_mem_read <= MemRead;       // will be used in MEM stage
-      ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
-      ID_EX_reg_write <= RegWrite;
-      ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
-      // From others
-      ID_EX_rs1_data <= rs1_dout;
-      ID_EX_rs2_data <= rs2_dout;
-      ID_EX_imm <= ImmGenOut;
-      ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
-      ID_EX_rd <= IF_ID_inst[11:7];
+    else begin 
+      if ((ID_EX_mem_read && ID_EX_rd != 0) && ((ID_EX_rd == IF_ID_inst[19:15]) || (ID_EX_rd == IF_ID_inst[24:20]))) begin
+        ID_EX_alu_src <= 0;      // will be used in EX stage
+        ID_EX_mem_write <= 0;      // will be used in MEM stage
+        ID_EX_mem_read <= 0;       // will be used in MEM stage
+        ID_EX_mem_to_reg <= 0;    // will be used in WB stage
+        ID_EX_reg_write <= 0;
+        ID_EX_rs1_data <= 0;
+        ID_EX_rs2_data <= 0;
+        ID_EX_imm <= 0;
+        ID_EX_ALU_ctrl_unit_input <= 0;
+        ID_EX_rd <= 0;
+      end else begin
+        // From the control unit
+        ID_EX_alu_src <= AluSrc;      // will be used in EX stage
+        ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
+        ID_EX_mem_read <= MemRead;       // will be used in MEM stage
+        ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
+        ID_EX_reg_write <= RegWrite;
+        ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
+        // From others
+        ID_EX_rs1_data <= MUX6Out;
+        ID_EX_rs2_data <= MUX7Out;
+        ID_EX_imm <= ImmGenOut;
+        ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
+        ID_EX_rd <= IF_ID_inst[11:7];
+      end
     end
   end
 
