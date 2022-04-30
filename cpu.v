@@ -45,6 +45,10 @@ module CPU(input reset,       // positive reset signal
   wire rs1_op;
   wire rs2_op;
 
+  wire ControlOp;
+  wire PCWrite;
+  wire IF_ID_Write;
+
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -94,9 +98,6 @@ module CPU(input reset,       // positive reset signal
   reg [4:0] MEM_WB_rd;
   
   reg haltFlag;
-
-  reg PCWrite;
-  reg IF_ID_Write;
 
 
   // ---------- Update program counter ----------
@@ -180,7 +181,7 @@ module CPU(input reset,       // positive reset signal
     .rs2(IF_ID_inst[24:20]),
     .PC_write(PCWrite),
     .IF_ID_write(IF_ID_Write),
-    .control_op(ControlOp),
+    .control_op(ControlOp)
   );
 
   MUX2_to_1 MUX6 (rs1_dout, MUX2Out, rs1_op, MUX6Out);
@@ -202,11 +203,11 @@ module CPU(input reset,       // positive reset signal
     end
     else begin
       // From the control unit
-      ID_EX_alu_src <= AluSrc;      // will be used in EX stage
-      ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
-      ID_EX_mem_read <= MemRead;       // will be used in MEM stage
-      ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
-      ID_EX_reg_write <= RegWrite;
+      ID_EX_alu_src <= ControlOp ? 0 : AluSrc;      // will be used in EX stage
+      ID_EX_mem_write <= ControlOp ? 0 : MemWrite;      // will be used in MEM stage
+      ID_EX_mem_read <= ControlOp ? 0 : MemRead;       // will be used in MEM stage
+      ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
+      ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
       ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
       // From others
       ID_EX_rs1_data <= MUX6Out;
