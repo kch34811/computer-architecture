@@ -33,8 +33,8 @@ module CPU(input reset,       // positive reset signal
 
   wire [31:0] MUX1Out;
   wire [31:0] MUX2Out;
-  wire [4:0] MUX3Out;
-  wire [4:0] MUX4Out;
+  wire [31:0] MUX3Out;
+  wire [31:0] MUX4Out;
   wire [4:0] MUX5Out;
 
   wire [1:0] forward_rs1_op;

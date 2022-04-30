@@ -1,6 +1,6 @@
-module ALU (input [31:0] alu_in_1, 
+module ALU (input [3:0] alu_op,
+            input [31:0] alu_in_1, 
 	        input [31:0] alu_in_2, 
-	        input [3:0] alu_op,
        	    output reg [31:0] alu_result
        	    //output reg alu_bcond
             );
