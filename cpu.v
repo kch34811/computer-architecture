@@ -124,7 +124,7 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
       IF_ID_inst <= 0;
     end
-    else begin
+    else if (IF_ID_Write) begin
       IF_ID_inst <= InstMemOut;
     end
   end
@@ -188,6 +188,8 @@ module CPU(input reset,       // positive reset signal
       ID_EX_imm <= 0;
       ID_EX_ALU_ctrl_unit_input <= 0;
       ID_EX_rd <= 0;
+      PCWrite <= 1'b1;
+      IF_ID_Write <= 1'b1;
     end
     else begin 
       if ((ID_EX_mem_read && ID_EX_rd != 0) && ((ID_EX_rd == IF_ID_inst[19:15]) || (ID_EX_rd == IF_ID_inst[24:20]))) begin
@@ -196,7 +198,11 @@ module CPU(input reset,       // positive reset signal
         ID_EX_mem_read <= 0;       // will be used in MEM stage
         ID_EX_mem_to_reg <= 0;    // will be used in WB stage
         ID_EX_reg_write <= 0;
+        PCWrite <= 1'b0;
+        IF_ID_Write <= 1'b0;
       end else begin
+        PCWrite <= 1'b1;
+        IF_ID_Write <= 1'b1;
         // From the control unit
         ID_EX_alu_src <= AluSrc;      // will be used in EX stage
         ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
