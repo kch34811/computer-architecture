@@ -12,6 +12,13 @@ module CPU(input reset,       // positive reset signal
            input clk,         // clock signal
            output is_halted); // Whehther to finish simulation
   /***** Wire declarations *****/
+  wire [31:0] PCOut;
+  wire [31:0] PCIn;
+  wire [31:0] InstMemOut;
+  wire [31:0] rs1_dout;
+  wire [31:0] rs2_dout;
+  wire [31:0] ALUResult;
+
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -57,18 +64,18 @@ module CPU(input reset,       // positive reset signal
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
   PC pc(
-    .reset(),       // input (Use reset to initialize PC. Initial value must be 0)
-    .clk(),         // input
-    .next_pc(),     // input
-    .current_pc()   // output
+    .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
+    .clk(clk),         // input
+    .next_pc(PCIn),     // input
+    .current_pc(PCOut)   // output
   );
   
   // ---------- Instruction Memory ----------
   InstMemory imem(
-    .reset(),   // input
-    .clk(),     // input
-    .addr(),    // input
-    .dout()     // output
+    .reset(reset),   // input
+    .clk(clk),     // input
+    .addr(PCOut),    // input
+    .dout(InstMemOut)     // output
   );
 
   // Update IF/ID pipeline registers here
@@ -76,26 +83,27 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
     end
     else begin
+      IF_ID_inst <= InstMemOut;
     end
   end
 
   // ---------- Register File ----------
   RegisterFile reg_file (
-    .reset (),        // input
-    .clk (),          // input
-    .rs1 (),          // input
-    .rs2 (),          // input
-    .rd (),           // input
-    .rd_din (),       // input
-    .write_enable (),    // input
-    .rs1_dout (),     // output
-    .rs2_dout ()      // output
+    .reset (reset),        // input
+    .clk (clk),          // input
+    .rs1 (IF_ID_inst[19:15]),          // input
+    .rs2 (IF_ID_inst[24:20]),          // input
+    .rd (IF_ID_inst[11:7]),           // input
+    .rd_din (MEM_WB_mem_to_reg_src_2),       // input
+    .write_enable (MEM_WB_reg_write),    // input
+    .rs1_dout (rs1_dout),     // output
+    .rs2_dout (rs2_dout)      // output
   );
 
 
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
-    .part_of_inst(),  // input
+    .part_of_inst(IF_ID_inst[6:0]),  // input
     .mem_read(),      // output
     .mem_to_reg(),    // output
     .mem_write(),     // output
