@@ -172,6 +172,17 @@ module CPU(input reset,       // positive reset signal
     .imm_gen_out(ImmGenOut)    // output
   );
 
+  // ---------- Hazard Detection Unit ----------
+  HazardDetectionUnit hazard_detection_unit(
+    .mem_read(ID_EX_mem_read),
+    .rd(ID_EX_rd),
+    .rs1(IF_ID_inst[19:15]),
+    .rs2(IF_ID_inst[24:20]),
+    .PC_write(PCWrite),
+    .IF_ID_write(IF_ID_Write),
+    .control_op(ControlOp),
+  );
+
   MUX2_to_1 MUX6 (rs1_dout, MUX2Out, rs1_op, MUX6Out);
   MUX2_to_1 MUX7 (rs2_dout, MUX2Out, rs2_op, MUX7Out);
 
@@ -188,35 +199,21 @@ module CPU(input reset,       // positive reset signal
       ID_EX_imm <= 0;
       ID_EX_ALU_ctrl_unit_input <= 0;
       ID_EX_rd <= 0;
-      PCWrite <= 1'b1;
-      IF_ID_Write <= 1'b1;
     end
-    else begin 
-      if ((ID_EX_mem_read && ID_EX_rd != 0) && ((ID_EX_rd == IF_ID_inst[19:15]) || (ID_EX_rd == IF_ID_inst[24:20]))) begin
-        ID_EX_alu_src <= 0;      // will be used in EX stage
-        ID_EX_mem_write <= 0;      // will be used in MEM stage
-        ID_EX_mem_read <= 0;       // will be used in MEM stage
-        ID_EX_mem_to_reg <= 0;    // will be used in WB stage
-        ID_EX_reg_write <= 0;
-        PCWrite <= 1'b0;
-        IF_ID_Write <= 1'b0;
-      end else begin
-        PCWrite <= 1'b1;
-        IF_ID_Write <= 1'b1;
-        // From the control unit
-        ID_EX_alu_src <= AluSrc;      // will be used in EX stage
-        ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
-        ID_EX_mem_read <= MemRead;       // will be used in MEM stage
-        ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
-        ID_EX_reg_write <= RegWrite;
-        ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
-        // From others
-        ID_EX_rs1_data <= MUX6Out;
-        ID_EX_rs2_data <= MUX7Out;
-        ID_EX_imm <= ImmGenOut;
-        ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
-        ID_EX_rd <= IF_ID_inst[11:7];
-      end
+    else begin
+      // From the control unit
+      ID_EX_alu_src <= AluSrc;      // will be used in EX stage
+      ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
+      ID_EX_mem_read <= MemRead;       // will be used in MEM stage
+      ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
+      ID_EX_reg_write <= RegWrite;
+      ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
+      // From others
+      ID_EX_rs1_data <= MUX6Out;
+      ID_EX_rs2_data <= MUX7Out;
+      ID_EX_imm <= ImmGenOut;
+      ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
+      ID_EX_rd <= IF_ID_inst[11:7];
     end
   end
 
