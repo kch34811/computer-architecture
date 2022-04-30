@@ -1,11 +1,11 @@
-module ForwardingUnit(input [6:0] rs1,
-                      input [6:0] rs2,
-                      input [6:0] EX_MEM_rd,
-                      input [6:0] MEM_WB_rd,
+module ForwardingUnit(input [4:0] rs1,
+                      input [4:0] rs2,
+                      input [4:0] EX_MEM_rd,
+                      input [4:0] MEM_WB_rd,
                       input EX_MEM_reg_write,
                       input MEM_WB_reg_write,
-                      output [1:0] forward_rs1_op,
-                      output [1:0] forward_rs2_op
+                      output reg [1:0] forward_rs1_op,
+                      output reg [1:0] forward_rs2_op
                       );
     
     always @(*) begin

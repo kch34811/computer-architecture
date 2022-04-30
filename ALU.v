@@ -1,11 +1,12 @@
 module ALU (input [31:0] alu_in_1, 
 	        input [31:0] alu_in_2, 
 	        input [3:0] alu_op,
-       	    output reg [31:0] alu_result,
-       	    output reg alu_bcond);
+       	    output reg [31:0] alu_result
+       	    //output reg alu_bcond
+            );
 
 always @* begin
-    alu_bcond = 0;
+    //alu_bcond = 0;
 
 	case(alu_op)
 		4'b0000:

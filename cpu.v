@@ -34,6 +34,12 @@ module CPU(input reset,       // positive reset signal
   wire MUX1Out;
   wire MUX2Out;
 
+  wire [1:0] forward_rs1_op;
+  wire [1:0] forward_rs2_op;
+
+  wire [4:0] MUX3Out;
+  wire [4:0] MUX4Out;
+
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -54,7 +60,7 @@ module CPU(input reset,       // positive reset signal
   reg [31:0] ID_EX_rs2_data;
   reg [31:0] ID_EX_imm;
   reg [31:0] ID_EX_ALU_ctrl_unit_input;
-  reg [31:0] ID_EX_rd;
+  reg [4:0] ID_EX_rd;
 
   /***** EX/MEM pipeline registers *****/
   // From the control unit
@@ -66,7 +72,7 @@ module CPU(input reset,       // positive reset signal
   // From others
   reg [31:0] EX_MEM_alu_out;
   reg [31:0] EX_MEM_dmem_data;
-  reg [31:0] EX_MEM_rd;
+  reg [4:0] EX_MEM_rd;
 
   /***** MEM/WB pipeline registers *****/
   // From the control unit
@@ -75,7 +81,9 @@ module CPU(input reset,       // positive reset signal
   // From others
   reg [31:0] MEM_WB_mem_to_reg_src_1;
   reg [31:0] MEM_WB_mem_to_reg_src_2;
-  reg [31:0] MEM_WB_rd;
+  reg [4:0] MEM_WB_rd;
+
+
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -178,11 +186,25 @@ module CPU(input reset,       // positive reset signal
   // ---------- ALU ----------
   ALU alu (
     .alu_op(ALUop),      // input
-    .alu_in_1(ID_EX_rs1_data),    // input  
-    .alu_in_2(MUX1Out),    // input
-    .alu_result(ALUResult),  // output
-    .alu_zero()     // output
+    .alu_in_1(MUX3Out),    // input  
+    .alu_in_2(MUX4Out),    // input
+    .alu_result(ALUResult)  // output
+    //.alu_zero()     // output
   );
+
+  ForwardingUnit forwardUnit(
+    .rs1 (ID_EX_ALU_ctrl_unit_input[19:15]),
+    .rs2 (ID_EX_ALU_ctrl_unit_input[24:20]),
+    .EX_MEM_rd (EX_MEM_rd),
+    .MEM_WB_rd (MEM_WB_rd),
+    .EX_MEM_reg_write (EX_MEM_reg_write),
+    .MEM_WB_reg_write (MEM_WB_reg_write),
+    .forward_rs1_op (forward_rs1_op),
+    .forward_rs2_op (forward_rs2_op)
+  );
+
+  MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 5'b00000, forward_rs1_op, MUX3Out);
+  MUX4_to_1 MUX4 (MUX1Out, EX_MEM_alu_out, MUX2Out, 5'b00000, forward_rs2_op, MUX4Out);
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
