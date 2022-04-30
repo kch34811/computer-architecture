@@ -49,6 +49,8 @@ module CPU(input reset,       // positive reset signal
   wire PCWrite;
   wire IF_ID_Write;
 
+  wire ecallOp;
+
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -105,7 +107,7 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),
-    .PC_control (PCWrite),        // input
+    .PC_control (PCWrite && !ecallOp),        // input
     .next_pc(PCIn),     // input
     .current_pc(PCOut)   // output
   );
@@ -125,7 +127,7 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
       IF_ID_inst <= 0;
     end
-    else if (IF_ID_Write) begin
+    else if (IF_ID_Write && !ecallOp) begin
       IF_ID_inst <= InstMemOut;
     end
   end
@@ -184,6 +186,12 @@ module CPU(input reset,       // positive reset signal
     .control_op(ControlOp)
   );
 
+  EcallDetection ecall_detection(
+    .rd (ID_EX_rd),
+    .isEcall (isEcall),
+    .ecall_op (ecallOp)
+  );
+
   MUX2_to_1 MUX6 (rs1_dout, MUX2Out, rs1_op, MUX6Out);
   MUX2_to_1 MUX7 (rs2_dout, MUX2Out, rs2_op, MUX7Out);
 
@@ -203,12 +211,12 @@ module CPU(input reset,       // positive reset signal
     end
     else begin
       // From the control unit
-      ID_EX_alu_src <= ControlOp ? 0 : AluSrc;      // will be used in EX stage
-      ID_EX_mem_write <= ControlOp ? 0 : MemWrite;      // will be used in MEM stage
-      ID_EX_mem_read <= ControlOp ? 0 : MemRead;       // will be used in MEM stage
-      ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
-      ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
-      ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
+      ID_EX_alu_src <= (ControlOp || ecallOp) ? 0 : AluSrc;      // will be used in EX stage
+      ID_EX_mem_write <= (ControlOp || ecallOp) ? 0 : MemWrite;      // will be used in MEM stage
+      ID_EX_mem_read <= (ControlOp || ecallOp) ? 0 : MemRead;       // will be used in MEM stage
+      ID_EX_mem_to_reg <= (ControlOp || ecallOp) ? 0 : MemToReg;    // will be used in WB stage
+      ID_EX_reg_write <= (ControlOp || ecallOp) ? 0 : RegWrite;
+      ID_EX_is_ecall <= ((rs1_dout == 32'b1010) && isEcall);
       // From others
       ID_EX_rs1_data <= MUX6Out;
       ID_EX_rs2_data <= MUX7Out;
