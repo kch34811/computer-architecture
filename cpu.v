@@ -33,13 +33,12 @@ module CPU(input reset,       // positive reset signal
 
   wire [31:0] MUX1Out;
   wire [31:0] MUX2Out;
-
-  wire [1:0] forward_rs1_op;
-  wire [1:0] forward_rs2_op;
-
   wire [4:0] MUX3Out;
   wire [4:0] MUX4Out;
   wire [4:0] MUX5Out;
+
+  wire [1:0] forward_rs1_op;
+  wire [1:0] forward_rs2_op;
 
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -98,6 +97,8 @@ module CPU(input reset,       // positive reset signal
     .next_pc(PCIn),     // input
     .current_pc(PCOut)   // output
   );
+
+  Adder PCAdder (PCOut, 32'b4, PCIn);
   
   // ---------- Instruction Memory ----------
   InstMemory imem(
@@ -173,7 +174,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_read <= MemRead;       // will be used in MEM stage
       ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= RegWrite;
-      ID_EX_is_ecall <= (MUX5Out == 5'b01010) && isEcall;
+      ID_EX_is_ecall <= (rs1_dout == 5'b01010) && isEcall;
       // From others
       ID_EX_rs1_data <= rs1_dout;
       ID_EX_rs2_data <= rs2_dout;
