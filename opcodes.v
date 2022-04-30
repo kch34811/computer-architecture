@@ -7,25 +7,25 @@
 // I-type instruction opcodes
 `define ARITHMETIC_IMM  7'b0010011
 `define LOAD            7'b0000011
-`define JALR            7'b1100111
+`define JALR            7'b1100111  // not in lab4
 // S-type instruction opcodes
 `define STORE           7'b0100011
 // B-type instruction opcodes
-`define BRANCH          7'b1100011
+`define BRANCH          7'b1100011  // not in lab4
 // U-type instruction opcodes
 //`define LUI             7'b0110111
 //`define AUIPC           7'b0010111
 // J-type instruction opcodes
-`define JAL             7'b1101111
+`define JAL             7'b1101111  // not in lab4
 
 
 `define ECALL           7'b1110011
 
 // FUNCT3
-`define FUNCT3_BEQ      3'b000
-`define FUNCT3_BNE      3'b001
-`define FUNCT3_BLT      3'b100
-`define FUNCT3_BGE      3'b101
+`define FUNCT3_BEQ      3'b000  // not in lab4
+`define FUNCT3_BNE      3'b001  // not in lab4
+`define FUNCT3_BLT      3'b100  // not in lab4
+`define FUNCT3_BGE      3'b101  // not in lab4
 
 `define FUNCT3_LW       3'b010
 `define FUNCT3_SW       3'b010

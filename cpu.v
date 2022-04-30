@@ -102,7 +102,7 @@ module CPU(input reset,       // positive reset signal
     .alu_src(),       // output
     .write_enable(),  // output
     .pc_to_reg(),     // output
-    .alu_op(),        // output
+    //.alu_op(),        // output
     .is_ecall()       // output (ecall inst)
   );
 
