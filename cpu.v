@@ -31,14 +31,15 @@ module CPU(input reset,       // positive reset signal
 
   wire isEcall;
 
-  wire MUX1Out;
-  wire MUX2Out;
+  wire [31:0] MUX1Out;
+  wire [31:0] MUX2Out;
 
   wire [1:0] forward_rs1_op;
   wire [1:0] forward_rs2_op;
 
   wire [4:0] MUX3Out;
   wire [4:0] MUX4Out;
+  wire [4:0] MUX5Out;
 
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -55,12 +56,14 @@ module CPU(input reset,       // positive reset signal
   reg ID_EX_mem_read;       // will be used in MEM stage
   reg ID_EX_mem_to_reg;     // will be used in WB stage
   reg ID_EX_reg_write;      // will be used in WB stage
+  reg ID_EX_is_ecall;
   // From others
   reg [31:0] ID_EX_rs1_data;
   reg [31:0] ID_EX_rs2_data;
   reg [31:0] ID_EX_imm;
   reg [31:0] ID_EX_ALU_ctrl_unit_input;
   reg [4:0] ID_EX_rd;
+
 
   /***** EX/MEM pipeline registers *****/
   // From the control unit
@@ -69,20 +72,22 @@ module CPU(input reset,       // positive reset signal
   //reg EX_MEM_is_branch;     // will be used in MEM stage
   reg EX_MEM_mem_to_reg;    // will be used in WB stage
   reg EX_MEM_reg_write;     // will be used in WB stage
+  reg EX_MEM_is_ecall;
   // From others
   reg [31:0] EX_MEM_alu_out;
   reg [31:0] EX_MEM_dmem_data;
   reg [4:0] EX_MEM_rd;
 
+
   /***** MEM/WB pipeline registers *****/
   // From the control unit
   reg MEM_WB_mem_to_reg;    // will be used in WB stage
   reg MEM_WB_reg_write;     // will be used in WB stage
+  reg MEM_WB_is_ecall;
   // From others
   reg [31:0] MEM_WB_mem_to_reg_src_1;
   reg [31:0] MEM_WB_mem_to_reg_src_2;
   reg [4:0] MEM_WB_rd;
-
 
 
   // ---------- Update program counter ----------
@@ -112,11 +117,13 @@ module CPU(input reset,       // positive reset signal
     end
   end
 
+  Ecall_MUX MUX5 (IF_ID_inst[19:15], 5'b10001, isEcall, MUX5Out);
+
   // ---------- Register File ----------
   RegisterFile reg_file (
     .reset (reset),        // input
     .clk (clk),          // input
-    .rs1 (IF_ID_inst[19:15]),          // input
+    .rs1 (MUX5Out),          // input
     .rs2 (IF_ID_inst[24:20]),          // input
     .rd (MEM_WB_rd),           // input
     .rd_din (MUX2Out),       // input
@@ -166,6 +173,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_read <= MemRead;       // will be used in MEM stage
       ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= RegWrite;
+      ID_EX_is_ecall <= (MUX5Out == 5'b01010) && isEcall;
       // From others
       ID_EX_rs1_data <= rs1_dout;
       ID_EX_rs2_data <= rs2_dout;
@@ -223,6 +231,7 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_mem_read <= ID_EX_mem_read;      // will be used in MEM stage
       EX_MEM_mem_to_reg <= ID_EX_mem_to_reg;    // will be used in WB stage
       EX_MEM_reg_write <= ID_EX_reg_write;     // will be used in WB stage
+      EX_MEM_is_ecall <= ID_EX_is_ecall;
       // From others
       EX_MEM_alu_out <= ALUResult;
       EX_MEM_dmem_data <= ID_EX_rs2_data;
@@ -249,6 +258,7 @@ module CPU(input reset,       // positive reset signal
       // From the control unit
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;   // will be used in WB stage
       MEM_WB_reg_write <= EX_MEM_reg_write;     // will be used in WB stage
+      MEM_WB_is_ecall <= EX_MEM_is_ecall;
       // From others
       MEM_WB_mem_to_reg_src_1 <= DataMemOut;
       MEM_WB_mem_to_reg_src_2 <= EX_MEM_alu_out;
@@ -258,5 +268,10 @@ module CPU(input reset,       // positive reset signal
 
   MUX2_to_1 MUX2 (MEM_WB_mem_to_reg_src_2, MEM_WB_mem_to_reg_src_1, MEM_WB_mem_to_reg, MUX2Out);
 
-  
+  always @(posedge clk) begin
+    if(MEM_WB_is_ecall) begin
+      is_halted = 1'b1;
+    end
+  end
+
 endmodule

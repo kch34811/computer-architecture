@@ -1,14 +1,14 @@
 `include "opcodes.v"
 
 module ControlUnit(input [6:0] part_of_inst,
-                   output mem_read,
-                   output mem_to_reg,
-                   output mem_write,
-                   output alu_src,
-                   output write_enable,
-                   output pc_to_reg,
+                   output reg mem_read,
+                   output reg mem_to_reg,
+                   output reg mem_write,
+                   output reg alu_src,
+                   output reg write_enable,
+                   output reg pc_to_reg,
                    //output alu_op,
-                   output is_ecall);
+                   output reg is_ecall);
 
     always @(part_of_inst) begin
         mem_read = 1'b0;
