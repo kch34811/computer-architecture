@@ -17,7 +17,22 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] InstMemOut;
   wire [31:0] rs1_dout;
   wire [31:0] rs2_dout;
+  wire [31:0] ImmGenOut;
   wire [31:0] ALUResult;
+  wire [31:0] DataMemOut;
+
+  wire MemRead;
+  wire MemWrite;
+  wire MemToReg; 
+  wire AluSrc;
+  wire RegWrite;
+  wire PCToReg;
+  wire [3:0] ALUop;
+
+  wire isEcall;
+
+  wire MUX1Out;
+  wire MUX2Out;
 
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -25,41 +40,42 @@ module CPU(input reset,       // positive reset signal
   // 1. You might need other pipeline registers that are not described below
   // 2. You might not need registers described below
   /***** IF/ID pipeline registers *****/
-  reg IF_ID_inst;           // will be used in ID stage
+  reg [31:0] IF_ID_inst;           // will be used in ID stage
   /***** ID/EX pipeline registers *****/
   // From the control unit
-  reg ID_EX_alu_op;         // will be used in EX stage
+  //reg ID_EX_alu_op;         // will be used in EX stage
   reg ID_EX_alu_src;        // will be used in EX stage
   reg ID_EX_mem_write;      // will be used in MEM stage
   reg ID_EX_mem_read;       // will be used in MEM stage
   reg ID_EX_mem_to_reg;     // will be used in WB stage
   reg ID_EX_reg_write;      // will be used in WB stage
   // From others
-  reg ID_EX_rs1_data;
-  reg ID_EX_rs2_data;
-  reg ID_EX_imm;
-  reg ID_EX_ALU_ctrl_unit_input;
-  reg ID_EX_rd;
+  reg [31:0] ID_EX_rs1_data;
+  reg [31:0] ID_EX_rs2_data;
+  reg [31:0] ID_EX_imm;
+  reg [31:0] ID_EX_ALU_ctrl_unit_input;
+  reg [31:0] ID_EX_rd;
 
   /***** EX/MEM pipeline registers *****/
   // From the control unit
   reg EX_MEM_mem_write;     // will be used in MEM stage
   reg EX_MEM_mem_read;      // will be used in MEM stage
-  reg EX_MEM_is_branch;     // will be used in MEM stage
+  //reg EX_MEM_is_branch;     // will be used in MEM stage
   reg EX_MEM_mem_to_reg;    // will be used in WB stage
   reg EX_MEM_reg_write;     // will be used in WB stage
   // From others
-  reg EX_MEM_alu_out;
-  reg EX_MEM_dmem_data;
-  reg EX_MEM_rd;
+  reg [31:0] EX_MEM_alu_out;
+  reg [31:0] EX_MEM_dmem_data;
+  reg [31:0] EX_MEM_rd;
 
   /***** MEM/WB pipeline registers *****/
   // From the control unit
   reg MEM_WB_mem_to_reg;    // will be used in WB stage
   reg MEM_WB_reg_write;     // will be used in WB stage
   // From others
-  reg MEM_WB_mem_to_reg_src_1;
-  reg MEM_WB_mem_to_reg_src_2;
+  reg [31:0] MEM_WB_mem_to_reg_src_1;
+  reg [31:0] MEM_WB_mem_to_reg_src_2;
+  reg [31:0] MEM_WB_rd;
 
   // ---------- Update program counter ----------
   // PC must be updated on the rising edge (positive edge) of the clock.
@@ -81,6 +97,7 @@ module CPU(input reset,       // positive reset signal
   // Update IF/ID pipeline registers here
   always @(posedge clk) begin
     if (reset) begin
+      IF_ID_inst <= 0;
     end
     else begin
       IF_ID_inst <= InstMemOut;
@@ -93,8 +110,8 @@ module CPU(input reset,       // positive reset signal
     .clk (clk),          // input
     .rs1 (IF_ID_inst[19:15]),          // input
     .rs2 (IF_ID_inst[24:20]),          // input
-    .rd (IF_ID_inst[11:7]),           // input
-    .rd_din (MEM_WB_mem_to_reg_src_2),       // input
+    .rd (MEM_WB_rd),           // input
+    .rd_din (MUX2Out),       // input
     .write_enable (MEM_WB_reg_write),    // input
     .rs1_dout (rs1_dout),     // output
     .rs2_dout (rs2_dout)      // output
@@ -104,62 +121,102 @@ module CPU(input reset,       // positive reset signal
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
     .part_of_inst(IF_ID_inst[6:0]),  // input
-    .mem_read(),      // output
-    .mem_to_reg(),    // output
-    .mem_write(),     // output
-    .alu_src(),       // output
-    .write_enable(),  // output
-    .pc_to_reg(),     // output
+    .mem_read(MemRead),      // output
+    .mem_to_reg(MemToReg),    // output
+    .mem_write(MemWrite),     // output
+    .alu_src(AluSrc),       // output
+    .write_enable(RegWrite),  // output
+    .pc_to_reg(PCToReg),     // output
     //.alu_op(),        // output
-    .is_ecall()       // output (ecall inst)
+    .is_ecall(isEcall)       // output (ecall inst)
   );
 
   // ---------- Immediate Generator ----------
   ImmediateGenerator imm_gen(
-    .part_of_inst(),  // input
-    .imm_gen_out()    // output
+    .part_of_inst(IF_ID_inst[31:0]),  // input
+    .imm_gen_out(ImmGenOut)    // output
   );
 
   // Update ID/EX pipeline registers here
   always @(posedge clk) begin
     if (reset) begin
+      ID_EX_alu_src <= 0;      // will be used in EX stage
+      ID_EX_mem_write <= 0;      // will be used in MEM stage
+      ID_EX_mem_read <= 0;       // will be used in MEM stage
+      ID_EX_mem_to_reg <= 0;    // will be used in WB stage
+      ID_EX_reg_write <= 0;
+      ID_EX_rs1_data <= 0;
+      ID_EX_rs2_data <= 0;
+      ID_EX_imm <= 0;
+      ID_EX_ALU_ctrl_unit_input <= 0;
+      ID_EX_rd <= 0;
     end
     else begin
+      // From the control unit
+      ID_EX_alu_src <= AluSrc;      // will be used in EX stage
+      ID_EX_mem_write <= MemWrite;      // will be used in MEM stage
+      ID_EX_mem_read <= MemRead;       // will be used in MEM stage
+      ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
+      ID_EX_reg_write <= RegWrite;
+      // From others
+      ID_EX_rs1_data <= rs1_dout;
+      ID_EX_rs2_data <= rs2_dout;
+      ID_EX_imm <= ImmGenOut;
+      ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
+      ID_EX_rd <= IF_ID_inst[11:7];
     end
   end
 
+  MUX2_to_1 MUX1 (ID_EX_rs2_data, ID_EX_imm, ID_EX_alu_src, MUX1Out);
+
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit (
-    .part_of_inst(),  // input
-    .alu_op()         // output
+    .all_of_inst(ID_EX_ALU_ctrl_unit_input),  // input
+    .alu_op(ALUop)         // output
   );
 
   // ---------- ALU ----------
   ALU alu (
-    .alu_op(),      // input
-    .alu_in_1(),    // input  
-    .alu_in_2(),    // input
-    .alu_result(),  // output
+    .alu_op(ALUop),      // input
+    .alu_in_1(ID_EX_rs1_data),    // input  
+    .alu_in_2(MUX1Out),    // input
+    .alu_result(ALUResult),  // output
     .alu_zero()     // output
   );
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
     if (reset) begin
+      EX_MEM_mem_write <= 0;     
+      EX_MEM_mem_read <= 0;      
+      EX_MEM_mem_to_reg <= 0;    
+      EX_MEM_reg_write <= 0;     
+      EX_MEM_alu_out <= 0;
+      EX_MEM_dmem_data <= 0;
+      EX_MEM_rd <= 0;
     end
     else begin
+      // From the control unit
+      EX_MEM_mem_write <= ID_EX_mem_write;     // will be used in MEM stage
+      EX_MEM_mem_read <= ID_EX_mem_read;      // will be used in MEM stage
+      EX_MEM_mem_to_reg <= ID_EX_mem_to_reg;    // will be used in WB stage
+      EX_MEM_reg_write <= ID_EX_reg_write;     // will be used in WB stage
+      // From others
+      EX_MEM_alu_out <= ALUResult;
+      EX_MEM_dmem_data <= ID_EX_rs2_data;
+      EX_MEM_rd <= ID_EX_rd;
     end
   end
 
   // ---------- Data Memory ----------
   DataMemory dmem(
-    .reset (),      // input
-    .clk (),        // input
-    .addr (),       // input
-    .din (),        // input
-    .mem_read (),   // input
-    .mem_write (),  // input
-    .dout ()        // output
+    .reset (reset),      // input
+    .clk (clk),        // input
+    .addr (EX_MEM_alu_out),       // input
+    .din (EX_MEM_dmem_data),        // input
+    .mem_read (EX_MEM_mem_read),   // input
+    .mem_write (EX_MEM_mem_write),  // input
+    .dout (DataMemOut)        // output
   );
 
   // Update MEM/WB pipeline registers here
@@ -167,8 +224,17 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
     end
     else begin
+      // From the control unit
+      MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;   // will be used in WB stage
+      MEM_WB_reg_write <= EX_MEM_reg_write;     // will be used in WB stage
+      // From others
+      MEM_WB_mem_to_reg_src_1 <= DataMemOut;
+      MEM_WB_mem_to_reg_src_2 <= EX_MEM_alu_out;
+      MEM_WB_rd <= EX_MEM_rd;
     end
   end
+
+  MUX2_to_1 MUX2 (MEM_WB_mem_to_reg_src_2, MEM_WB_mem_to_reg_src_1, MEM_WB_mem_to_reg, MUX2Out);
 
   
 endmodule
