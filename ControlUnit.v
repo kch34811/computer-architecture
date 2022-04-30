@@ -7,7 +7,7 @@ module ControlUnit(input [6:0] part_of_inst,
                    output alu_src,
                    output write_enable,
                    output pc_to_reg,
-                   output alu_op,
+                   //output alu_op,
                    output is_ecall);
 
     always @(part_of_inst) begin
@@ -17,7 +17,7 @@ module ControlUnit(input [6:0] part_of_inst,
         alu_src = 1'b0;
         write_enable = 1'b0;
         pc_to_reg = 1'b0;
-        alu_op = 1'b0;
+        //alu_op = 1'b0;
         is_ecall = 1'b0;
 
         if (part_of_inst == `LOAD) begin // opcode == LW/LH/LB
