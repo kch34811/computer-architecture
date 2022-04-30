@@ -256,6 +256,12 @@ module CPU(input reset,       // positive reset signal
   // Update MEM/WB pipeline registers here
   always @(posedge clk) begin
     if (reset) begin
+      MEM_WB_mem_to_reg <= 0;  
+      MEM_WB_reg_write <= 0;   
+      MEM_WB_is_ecall <= 0;
+      MEM_WB_mem_to_reg_src_1 <= 0;
+      MEM_WB_mem_to_reg_src_2 <= 0;
+      MEM_WB_rd <= 0;
     end
     else begin
       // From the control unit
