@@ -45,9 +45,6 @@ module CPU(input reset,       // positive reset signal
   wire rs1_op;
   wire rs2_op;
 
-  wire PCWrite;
-  wire IF_ID_Write;
-
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -97,6 +94,9 @@ module CPU(input reset,       // positive reset signal
   reg [4:0] MEM_WB_rd;
   
   reg haltFlag;
+
+  reg PCWrite;
+  reg IF_ID_Write;
 
 
   // ---------- Update program counter ----------
