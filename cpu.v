@@ -87,6 +87,8 @@ module CPU(input reset,       // positive reset signal
   reg [31:0] MEM_WB_mem_to_reg_src_1;
   reg [31:0] MEM_WB_mem_to_reg_src_2;
   reg [4:0] MEM_WB_rd;
+  
+  reg haltFlag;
 
 
   // ---------- Update program counter ----------
@@ -98,7 +100,7 @@ module CPU(input reset,       // positive reset signal
     .current_pc(PCOut)   // output
   );
 
-  Adder PCAdder (PCOut, 32'b4, PCIn);
+  Adder PCAdder (PCOut, 32'b100, PCIn);
   
   // ---------- Instruction Memory ----------
   InstMemory imem(
@@ -174,7 +176,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_read <= MemRead;       // will be used in MEM stage
       ID_EX_mem_to_reg <= MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= RegWrite;
-      ID_EX_is_ecall <= (rs1_dout == 5'b01010) && isEcall;
+      ID_EX_is_ecall <= (rs1_dout == 32'b01010) && isEcall;
       // From others
       ID_EX_rs1_data <= rs1_dout;
       ID_EX_rs2_data <= rs2_dout;
@@ -212,8 +214,8 @@ module CPU(input reset,       // positive reset signal
     .forward_rs2_op (forward_rs2_op)
   );
 
-  MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 5'b00000, forward_rs1_op, MUX3Out);
-  MUX4_to_1 MUX4 (MUX1Out, EX_MEM_alu_out, MUX2Out, 5'b00000, forward_rs2_op, MUX4Out);
+  MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs1_op, MUX3Out);
+  MUX4_to_1 MUX4 (MUX1Out, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs2_op, MUX4Out);
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
@@ -269,10 +271,12 @@ module CPU(input reset,       // positive reset signal
 
   MUX2_to_1 MUX2 (MEM_WB_mem_to_reg_src_2, MEM_WB_mem_to_reg_src_1, MEM_WB_mem_to_reg, MUX2Out);
 
-  always @(posedge clk) begin
-    if(MEM_WB_is_ecall) begin
-      is_halted = 1'b1;
+  assign is_halted = haltFlag;
+  always @(*) begin
+    if (MEM_WB_is_ecall == 1'b1) begin
+      haltFlag <= 1'b1;
     end
+    else haltFlag <= 1'b0;
   end
 
 endmodule
