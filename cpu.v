@@ -49,8 +49,6 @@ module CPU(input reset,       // positive reset signal
   wire PCWrite;
   wire IF_ID_Write;
 
-  wire ecallOp;
-
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -107,7 +105,7 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),
-    .PC_control (PCWrite && !ecallOp),        // input
+    .PC_control (PCWrite),        // input
     .next_pc(PCIn),     // input
     .current_pc(PCOut)   // output
   );
@@ -127,7 +125,7 @@ module CPU(input reset,       // positive reset signal
     if (reset) begin
       IF_ID_inst <= 0;
     end
-    else if (IF_ID_Write && !ecallOp) begin
+    else if (IF_ID_Write) begin
       IF_ID_inst <= InstMemOut;
     end
   end
@@ -155,7 +153,6 @@ module CPU(input reset,       // positive reset signal
     .rs2_op (rs2_op)
   );
 
-
   // ---------- Control Unit ----------
   ControlUnit ctrl_unit (
     .part_of_inst(IF_ID_inst[6:0]),  // input
@@ -181,16 +178,10 @@ module CPU(input reset,       // positive reset signal
     .rd(ID_EX_rd),
     .rs1(IF_ID_inst[19:15]),
     .rs2(IF_ID_inst[24:20]),
+    .is_ecall(isEcall),
     .PC_write(PCWrite),
     .IF_ID_write(IF_ID_Write),
     .control_op(ControlOp)
-  );
-
-  EcallDetection ecall_detection(
-    .rd1 (ID_EX_rd),
-    .rd2 (EX_MEM_rd),
-    .isEcall (isEcall),
-    .ecall_op (ecallOp)
   );
 
   MUX2_to_1 MUX6 (rs1_dout, MUX2Out, rs1_op, MUX6Out);
@@ -217,7 +208,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_read <= ControlOp ? 0 : MemRead;       // will be used in MEM stage
       ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
-      ID_EX_is_ecall <= (rs1_dout == 32'b1010) && isEcall;
+      ID_EX_is_ecall <= ControlOp ? 0 : (rs1_dout == 32'b1010) && isEcall;
       // From others
       ID_EX_rs1_data <= MUX6Out;
       ID_EX_rs2_data <= MUX7Out;
@@ -271,10 +262,10 @@ module CPU(input reset,       // positive reset signal
     end
     else begin
       // From the control unit
-      EX_MEM_mem_write <= ecallOp ? 0 : ID_EX_mem_write;     // will be used in MEM stage
-      EX_MEM_mem_read <= ecallOp ? 0 : ID_EX_mem_read;      // will be used in MEM stage
-      EX_MEM_mem_to_reg <= ecallOp ? 0 : ID_EX_mem_to_reg;    // will be used in WB stage
-      EX_MEM_reg_write <= ecallOp ? 0 : ID_EX_reg_write;     // will be used in WB stage
+      EX_MEM_mem_write <= ID_EX_mem_write;     // will be used in MEM stage
+      EX_MEM_mem_read <= ID_EX_mem_read;      // will be used in MEM stage
+      EX_MEM_mem_to_reg <= ID_EX_mem_to_reg;    // will be used in WB stage
+      EX_MEM_reg_write <= ID_EX_reg_write;     // will be used in WB stage
       EX_MEM_is_ecall <= ID_EX_is_ecall;
       // From others
       EX_MEM_alu_out <= ALUResult;

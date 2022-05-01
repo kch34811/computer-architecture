@@ -37,7 +37,7 @@ module ControlUnit(input [6:0] part_of_inst,
             write_enable = 1'b1;
         end
 
-        if(part_of_inst == `ECALL) begin
+        if(part_of_inst == `ECALL || part_of_inst == 0) begin
             is_ecall = 1'b1;
         end
     end
