@@ -125,7 +125,7 @@ module CPU(input reset,       // positive reset signal
     .current_pc(PCOut)   // output
   );
 
-  MUX2_to_1 PCMUX (PCAdderOut, PC_target, alu_bcond || isJal || isJalr, PCMUXOut);
+  MUX2_to_1 PCMUX (PCAdderOut, PC_target, (alu_bcond && is_branch) || isJal || isJalr, PCMUXOut);
   Adder PCAdder (PCOut, 32'b100, PCAdderOut);
   
   // ---------- Instruction Memory ----------
