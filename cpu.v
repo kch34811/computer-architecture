@@ -359,7 +359,7 @@ module CPU(input reset,       // positive reset signal
   end
 
   MUX2_to_1 MUX2 (MEM_WB_mem_to_reg_src_2, MEM_WB_mem_to_reg_src_1, MEM_WB_mem_to_reg, MUX2Out);
-  MUX2_to_1 REGMUX (MUX2Out, MEM_WB_pc, MEM_WB_pc_to_reg, REGMUXOut);
+  MUX2_to_1 REGMUX (MUX2Out, MEM_WB_pc + 32'b100, MEM_WB_pc_to_reg, REGMUXOut);
 
   assign is_halted = haltFlag;
   always @(*) begin
