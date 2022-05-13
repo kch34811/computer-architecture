@@ -7,7 +7,8 @@ module ControlUnit(input [6:0] part_of_inst,
                    output reg alu_src,
                    output reg write_enable,
                    output reg pc_to_reg,
-                   //output alu_op,
+                   output reg is_jump;
+                   output reg is_branch;
                    output reg is_ecall);
 
     always @(part_of_inst) begin
@@ -17,8 +18,13 @@ module ControlUnit(input [6:0] part_of_inst,
         alu_src = 1'b0;
         write_enable = 1'b0;
         pc_to_reg = 1'b0;
-        //alu_op = 1'b0;
+        is_jump = 1'b0;
+        is_branch = 1'b0;
         is_ecall = 1'b0;
+
+        if (part_of_inst == `JAL || part_of_inst == `JALR) begin
+            is_jump = 1'b1;
+        end
 
         if (part_of_inst == `LOAD) begin // opcode == LW/LH/LB
             mem_read = 1'b1;
@@ -35,6 +41,10 @@ module ControlUnit(input [6:0] part_of_inst,
 
         if(part_of_inst != `STORE && part_of_inst != `BRANCH) begin
             write_enable = 1'b1;
+        end
+
+        if(part_of_inst == `BRANCH) begin
+            is_branch = 1'b1;
         end
 
         if(part_of_inst == `ECALL || part_of_inst == 0) begin

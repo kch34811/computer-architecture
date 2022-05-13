@@ -65,6 +65,7 @@ module CPU(input reset,       // positive reset signal
   reg ID_EX_alu_src;        // will be used in EX stage
   reg ID_EX_mem_write;      // will be used in MEM stage
   reg ID_EX_mem_read;       // will be used in MEM stage
+  reg ID_EX_is_branch;
   reg ID_EX_mem_to_reg;     // will be used in WB stage
   reg ID_EX_reg_write;      // will be used in WB stage
   reg ID_EX_is_ecall;
@@ -166,7 +167,8 @@ module CPU(input reset,       // positive reset signal
     .alu_src(AluSrc),       // output
     .write_enable(RegWrite),  // output
     .pc_to_reg(PCToReg),     // output
-    //.alu_op(),        // output
+    .is_jump(isJump),       // output
+    .is_branch(isBranch),   // output
     .is_ecall(isEcall)       // output (ecall inst)
   );
 
