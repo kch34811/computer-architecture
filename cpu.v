@@ -249,7 +249,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
       ID_EX_pc_to_reg <= ControlOp ? 0 : PCToReg;;
-      ID_EX_is_ecall <= ControlOp ? 0 : (rs1_dout == 32'b1010) && isEcall;
+      ID_EX_is_ecall <= ControlOp ? 0 : (EX_MEM_alu_out == 32'b1010) && isEcall;
       // From others
       ID_EX_rs1_data <= MUX6Out;
       ID_EX_rs2_data <= MUX7Out;
