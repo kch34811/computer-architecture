@@ -125,7 +125,7 @@ module CPU(input reset,       // positive reset signal
     .current_pc(PCOut)   // output
   );
 
-  MUX2_to_1 PCMUX (PCAdderOut, PC_target, (alu_bcond && is_branch) || isJal || isJalr, PCMUXOut);
+  MUX2_to_1 PCMUX (PCAdderOut, PC_target, (alu_bcond & ID_EX_is_branch) || ID_EX_is_jal || ID_EX_is_jalr, PCMUXOut);
   Adder PCAdder (PCOut, 32'b100, PCAdderOut);
   
   // ---------- Instruction Memory ----------
@@ -200,7 +200,7 @@ module CPU(input reset,       // positive reset signal
     .is_ecall(isEcall),
     .is_jal(isJal),
     .is_jalr(isJalr),
-    .is_bcond(alu_bcond),
+    .is_branch(),
     .PC_write(PCWrite),
     .IF_ID_write(IF_ID_Write),
     .control_op(ControlOp),
