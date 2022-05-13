@@ -18,6 +18,8 @@ module HazardDetectionUnit(input mem_read,
         PC_write = 1'b1;
         IF_ID_write = 1'b1;
         control_op = 1'b0;
+        IF_flush = 1'b0;
+        ID_flush = 1'b0;
         if ((mem_read && rd != 0) && ((rd == rs1) || (rd == rs2))) begin
             PC_write = 1'b0;
             IF_ID_write = 1'b0;
