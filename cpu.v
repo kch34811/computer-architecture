@@ -30,6 +30,8 @@ module CPU(input reset,       // positive reset signal
   wire [3:0] ALUop;
 
   wire isEcall;
+  wire alu_bcond;
+  wire pc_src;
 
   wire [31:0] MUX1Out;
   wire [31:0] MUX2Out;
@@ -232,7 +234,7 @@ module CPU(input reset,       // positive reset signal
     .alu_in_1(MUX3Out),    // input  
     .alu_in_2(MUX1Out),    // input
     .alu_result(ALUResult)  // output
-    //.alu_zero()     // output
+    .alu_bcond(alu_bcond)     // output
   );
 
   ForwardingUnit forwardUnit(
