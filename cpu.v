@@ -165,7 +165,7 @@ module CPU(input reset,       // positive reset signal
 
   MUX_CONTROL mux_control (
     .rs1 (MUX5Out),
-    .rs2 (IF_ID_inst),
+    .rs2 (IF_ID_inst[24:20]),
     .rd (MEM_WB_rd),
     .rs1_op (rs1_op),
     .rs2_op (rs2_op)
@@ -281,8 +281,8 @@ module CPU(input reset,       // positive reset signal
   MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs1_op, MUX3Out);
   MUX4_to_1 MUX4 (ID_EX_rs2_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs2_op, MUX4Out);
   MUX2_to_1 AdderInMUX (MUX3Out, ID_EX_pc, ID_EX_is_jal || ID_EX_is_branch, AdderInMUXOut);
-  MUX2_to_1 ALUInMUX (MUX4Out, ID_EX_imm, ID_EX_alu_src || ID_EX_is_jal || ID_EX_is_jalr || ID_EX_is_branch, ALUInMUXOut);
-  Adder TargetAdder (AdderInMUXOut, ALUInMUXOut << 1, PC_target);
+  MUX2_to_1 ALUInMUX (MUX4Out, ID_EX_imm, ID_EX_alu_src, ALUInMUXOut);
+  Adder TargetAdder (AdderInMUXOut, ID_EX_imm, PC_target);
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
