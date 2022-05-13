@@ -261,7 +261,7 @@ module CPU(input reset,       // positive reset signal
     .alu_op(ALUop),      // input
     .alu_in_1(MUX3Out),    // input  
     .alu_in_2(ALUInMUXOut),    // input
-    .alu_result(ALUResult)  // output
+    .alu_result(ALUResult),  // output
     .alu_bcond(alu_bcond)     // output
   );
 
