@@ -45,6 +45,7 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] AdderInMUXOut;
   wire [31:0] ALUInMUXOut;
   wire [31:0] PCMUXOut;
+  wire [31:0] REGMUXOut;
   wire [31:0] PC_target;
 
   wire [1:0] forward_rs1_op;
@@ -73,6 +74,7 @@ module CPU(input reset,       // positive reset signal
   reg ID_EX_alu_src;        // will be used in EX stage
   reg ID_EX_mem_write;      // will be used in MEM stage
   reg ID_EX_mem_read;       // will be used in MEM stage
+  reg ID_EX_pc_to_reg;
   reg ID_EX_is_jal;
   reg ID_EX_is_jalr;
   reg ID_EX_is_branch;
@@ -95,8 +97,10 @@ module CPU(input reset,       // positive reset signal
   //reg EX_MEM_is_branch;     // will be used in MEM stage
   reg EX_MEM_mem_to_reg;    // will be used in WB stage
   reg EX_MEM_reg_write;     // will be used in WB stage
+  reg EX_MEM_pc_to_reg;
   reg EX_MEM_is_ecall;
   // From others
+  reg [31:0] EX_MEM_pc;
   reg [31:0] EX_MEM_alu_out;
   reg [31:0] EX_MEM_dmem_data;
   reg [4:0] EX_MEM_rd;
@@ -106,8 +110,10 @@ module CPU(input reset,       // positive reset signal
   // From the control unit
   reg MEM_WB_mem_to_reg;    // will be used in WB stage
   reg MEM_WB_reg_write;     // will be used in WB stage
+  reg MEM_WB_pc_to_reg;
   reg MEM_WB_is_ecall;
   // From others
+  reg [31:0] MEM_WB_pc;
   reg [31:0] MEM_WB_mem_to_reg_src_1;
   reg [31:0] MEM_WB_mem_to_reg_src_2;
   reg [4:0] MEM_WB_rd;
@@ -157,7 +163,7 @@ module CPU(input reset,       // positive reset signal
     .rs1 (MUX5Out),          // input
     .rs2 (IF_ID_inst[24:20]),          // input
     .rd (MEM_WB_rd),           // input
-    .rd_din (MUX2Out),       // input
+    .rd_din (REGMUXOut),       // input
     .write_enable (MEM_WB_reg_write),    // input
     .rs1_dout (rs1_dout),     // output
     .rs2_dout (rs2_dout)      // output
@@ -230,6 +236,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_ALU_ctrl_unit_input <= 0;
       ID_EX_rd <= 0;
       ID_EX_pc <= 0;
+      ID_EX_pc_to_reg <= 0;
     end
     else begin
       // From the control unit
@@ -241,6 +248,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_is_branch <= ControlOp ? 0 : isBranch;     
       ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
+      ID_EX_pc_to_reg <= ControlOp ? 0 : PCToReg;;
       ID_EX_is_ecall <= ControlOp ? 0 : (rs1_dout == 32'b1010) && isEcall;
       // From others
       ID_EX_rs1_data <= MUX6Out;
@@ -294,6 +302,8 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_alu_out <= 0;
       EX_MEM_dmem_data <= 0;
       EX_MEM_rd <= 0;
+      EX_MEM_pc <= 0;
+      EX_MEM_pc_to_reg <= 0;
     end
     else begin
       // From the control unit
@@ -302,10 +312,12 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_mem_to_reg <= ID_EX_mem_to_reg;    // will be used in WB stage
       EX_MEM_reg_write <= ID_EX_reg_write;     // will be used in WB stage
       EX_MEM_is_ecall <= ID_EX_is_ecall;
+      EX_MEM_pc_to_reg <= ID_EX_pc_to_reg;
       // From others
       EX_MEM_alu_out <= ALUResult;
       EX_MEM_dmem_data <= MUX4Out;
       EX_MEM_rd <= ID_EX_rd;
+      EX_MEM_pc <= ID_EX_pc;
     end
   end
 
@@ -329,20 +341,25 @@ module CPU(input reset,       // positive reset signal
       MEM_WB_mem_to_reg_src_1 <= 0;
       MEM_WB_mem_to_reg_src_2 <= 0;
       MEM_WB_rd <= 0;
+      MEM_WB_pc <= 0;
+      MEM_WB_pc_to_reg <= 0;
     end
     else begin
       // From the control unit
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;   // will be used in WB stage
       MEM_WB_reg_write <= EX_MEM_reg_write;     // will be used in WB stage
+      MEM_WB_pc_to_reg <= EX_MEM_pc_to_reg;
       MEM_WB_is_ecall <= EX_MEM_is_ecall;
       // From others
       MEM_WB_mem_to_reg_src_1 <= DataMemOut;
       MEM_WB_mem_to_reg_src_2 <= EX_MEM_alu_out;
       MEM_WB_rd <= EX_MEM_rd;
+      MEM_WB_pc <= EX_MEM_pc;
     end
   end
 
   MUX2_to_1 MUX2 (MEM_WB_mem_to_reg_src_2, MEM_WB_mem_to_reg_src_1, MEM_WB_mem_to_reg, MUX2Out);
+  MUX2_to_1 REGMUX (MUX2Out, MEM_WB_pc, MEM_WB_pc_to_reg, REGMUXOut);
 
   assign is_halted = haltFlag;
   always @(*) begin

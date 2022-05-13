@@ -27,10 +27,12 @@ module ControlUnit(input [6:0] part_of_inst,
 
         if (part_of_inst == `JAL) begin
             is_jal = 1'b1;
+            pc_to_reg = 1'b1;
         end
 
         if (part_of_inst == `JALR) begin
             is_jalr = 1'b1;
+            pc_to_reg = 1'b1;
         end
 
         if (part_of_inst == `LOAD) begin // opcode == LW/LH/LB
