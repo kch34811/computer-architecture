@@ -5,6 +5,7 @@ module HazardDetectionUnit(input mem_read,
                            input is_ecall,
                            input is_jal,
                            input is_jalr,
+                           input is_branch,
                            input is_bcond,
                            output reg PC_write,
                            output reg IF_ID_write,
@@ -27,7 +28,7 @@ module HazardDetectionUnit(input mem_read,
             IF_ID_write = 1'b0;
             control_op = 1'b1;
         end
-        if (is_jal || is_jalr || is_bcond) begin
+        if (is_jal || is_jalr || (is_bcond && is_branch)) begin
             IF_flush = 1'b1;
             ID_flush = 1'b1;
         end
