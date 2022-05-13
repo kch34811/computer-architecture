@@ -58,6 +58,7 @@ module CPU(input reset,       // positive reset signal
   // 2. You might not need registers described below
   /***** IF/ID pipeline registers *****/
   reg [31:0] IF_ID_inst;           // will be used in ID stage
+  reg [31:0] IF_ID_pc;
   /***** ID/EX pipeline registers *****/
   // From the control unit
   //reg ID_EX_alu_op;         // will be used in EX stage
@@ -68,6 +69,7 @@ module CPU(input reset,       // positive reset signal
   reg ID_EX_reg_write;      // will be used in WB stage
   reg ID_EX_is_ecall;
   // From others
+  reg [31:0] ID_EX_pc;
   reg [31:0] ID_EX_rs1_data;
   reg [31:0] ID_EX_rs2_data;
   reg [31:0] ID_EX_imm;
