@@ -140,6 +140,7 @@ module CPU(input reset,       // positive reset signal
   always @(posedge clk) begin
     if (reset || IF_Flush) begin
       IF_ID_inst <= 0;
+      IF_ID_pc <= 0;
     end
     else if (IF_ID_Write) begin
       IF_ID_inst <= InstMemOut;
