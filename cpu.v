@@ -13,7 +13,7 @@ module CPU(input reset,       // positive reset signal
            output is_halted); // Whehther to finish simulation
   /***** Wire declarations *****/
   wire [31:0] PCOut;
-  wire [31:0] PCIn;
+  wire [31:0] PCAdderOut;
   wire [31:0] InstMemOut;
   wire [31:0] rs1_dout;
   wire [31:0] rs2_dout;
@@ -28,18 +28,24 @@ module CPU(input reset,       // positive reset signal
   wire RegWrite;
   wire PCToReg;
   wire [3:0] ALUop;
+  wire isJal;
+  wire isJalr;
+  wire isBranch;
 
   wire isEcall;
   wire alu_bcond;
   wire pc_src;
 
-  wire [31:0] MUX1Out;
   wire [31:0] MUX2Out;
   wire [31:0] MUX3Out;
   wire [31:0] MUX4Out;
   wire [4:0] MUX5Out;
   wire [31:0] MUX6Out;
   wire [31:0] MUX7Out;
+  wire [31:0] AdderInMUXOut;
+  wire [31:0] ALUInMUXOut;
+  wire [31:0] PCMUXOut;
+  wire [31:0] PC_target;
 
   wire [1:0] forward_rs1_op;
   wire [1:0] forward_rs2_op;
@@ -50,6 +56,8 @@ module CPU(input reset,       // positive reset signal
   wire ControlOp;
   wire PCWrite;
   wire IF_ID_Write;
+  wire IF_Flush;
+  wire ID_Flush;
 
   /***** Register declarations *****/
   // You need to modify the width of registers
@@ -65,6 +73,8 @@ module CPU(input reset,       // positive reset signal
   reg ID_EX_alu_src;        // will be used in EX stage
   reg ID_EX_mem_write;      // will be used in MEM stage
   reg ID_EX_mem_read;       // will be used in MEM stage
+  reg ID_EX_is_jal;
+  reg ID_EX_is_jalr;
   reg ID_EX_is_branch;
   reg ID_EX_mem_to_reg;     // will be used in WB stage
   reg ID_EX_reg_write;      // will be used in WB stage
@@ -111,11 +121,12 @@ module CPU(input reset,       // positive reset signal
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),
     .PC_control (PCWrite),        // input
-    .next_pc(PCIn),     // input
+    .next_pc(PCMUXOut),     // input
     .current_pc(PCOut)   // output
   );
 
-  Adder PCAdder (PCOut, 32'b100, PCIn);
+  MUX2_to_1 PCMUX (PCAdderOut, PC_target, alu_bcond || isJal || isJalr, PCMUXOut);
+  Adder PCAdder (PCOut, 32'b100, PCAdderOut);
   
   // ---------- Instruction Memory ----------
   InstMemory imem(
@@ -127,11 +138,12 @@ module CPU(input reset,       // positive reset signal
 
   // Update IF/ID pipeline registers here
   always @(posedge clk) begin
-    if (reset) begin
+    if (reset || IF_Flush) begin
       IF_ID_inst <= 0;
     end
     else if (IF_ID_Write) begin
       IF_ID_inst <= InstMemOut;
+      IF_ID_pc <= PCOut;
     end
   end
 
@@ -167,7 +179,8 @@ module CPU(input reset,       // positive reset signal
     .alu_src(AluSrc),       // output
     .write_enable(RegWrite),  // output
     .pc_to_reg(PCToReg),     // output
-    .is_jump(isJump),       // output
+    .is_jal(isJal),       // output
+    .is_jalr(isJalr),
     .is_branch(isBranch),   // output
     .is_ecall(isEcall)       // output (ecall inst)
   );
@@ -185,9 +198,14 @@ module CPU(input reset,       // positive reset signal
     .rs1(IF_ID_inst[19:15]),
     .rs2(IF_ID_inst[24:20]),
     .is_ecall(isEcall),
+    .is_jal(isJal),
+    .is_jalr(isJalr),
+    .is_bcond(alu_bcond),
     .PC_write(PCWrite),
     .IF_ID_write(IF_ID_Write),
-    .control_op(ControlOp)
+    .control_op(ControlOp),
+    .IF_flush(IF_Flush),
+    .ID_flush(ID_Flush)
   );
 
   MUX2_to_1 MUX6 (rs1_dout, MUX2Out, rs1_op, MUX6Out);
@@ -195,10 +213,13 @@ module CPU(input reset,       // positive reset signal
 
   // Update ID/EX pipeline registers here
   always @(posedge clk) begin
-    if (reset) begin
+    if (reset || ID_Flush) begin
       ID_EX_alu_src <= 0;      // will be used in EX stage
       ID_EX_mem_write <= 0;      // will be used in MEM stage
       ID_EX_mem_read <= 0;       // will be used in MEM stage
+      ID_EX_is_jal <= 0;
+      ID_EX_is_jalr <= 0;
+      ID_EX_is_branch <= 0;
       ID_EX_mem_to_reg <= 0;    // will be used in WB stage
       ID_EX_reg_write <= 0;
       ID_EX_rs1_data <= 0;
@@ -206,12 +227,16 @@ module CPU(input reset,       // positive reset signal
       ID_EX_imm <= 0;
       ID_EX_ALU_ctrl_unit_input <= 0;
       ID_EX_rd <= 0;
+      ID_EX_pc <= 0;
     end
     else begin
       // From the control unit
       ID_EX_alu_src <= ControlOp ? 0 : AluSrc;      // will be used in EX stage
       ID_EX_mem_write <= ControlOp ? 0 : MemWrite;      // will be used in MEM stage
       ID_EX_mem_read <= ControlOp ? 0 : MemRead;       // will be used in MEM stage
+      ID_EX_is_jal <= ControlOp ? 0 : isJal; 
+      ID_EX_is_jalr <= ControlOp ? 0 : isJalr;   
+      ID_EX_is_branch <= ControlOp ? 0 : isBranch;     
       ID_EX_mem_to_reg <= ControlOp ? 0 : MemToReg;    // will be used in WB stage
       ID_EX_reg_write <= ControlOp ? 0 : RegWrite;
       ID_EX_is_ecall <= ControlOp ? 0 : (rs1_dout == 32'b1010) && isEcall;
@@ -221,10 +246,9 @@ module CPU(input reset,       // positive reset signal
       ID_EX_imm <= ImmGenOut;
       ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
       ID_EX_rd <= IF_ID_inst[11:7];
+      ID_EX_pc <= IF_ID_pc;
     end
   end
-
-  MUX2_to_1 MUX1 (MUX4Out, ID_EX_imm, ID_EX_alu_src, MUX1Out);
 
   // ---------- ALU Control Unit ----------
   ALUControlUnit alu_ctrl_unit (
@@ -236,7 +260,7 @@ module CPU(input reset,       // positive reset signal
   ALU alu (
     .alu_op(ALUop),      // input
     .alu_in_1(MUX3Out),    // input  
-    .alu_in_2(MUX1Out),    // input
+    .alu_in_2(ALUInMUXOut),    // input
     .alu_result(ALUResult)  // output
     .alu_bcond(alu_bcond)     // output
   );
@@ -254,6 +278,9 @@ module CPU(input reset,       // positive reset signal
 
   MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs1_op, MUX3Out);
   MUX4_to_1 MUX4 (ID_EX_rs2_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs2_op, MUX4Out);
+  MUX2_to_1 AdderInMUX (MUX3Out, ID_EX_pc, ID_EX_is_jal || ID_EX_is_branch, AdderInMUXOut);
+  MUX2_to_1 ALUInMUX (MUX4Out, ID_EX_imm, ID_EX_alu_src || ID_EX_is_jal || ID_EX_is_jalr || ID_EX_is_branch, ALUInMUXOut);
+  Adder TargetAdder (AdderInMUXOut, ALUInMUXOut << 1, PC_target);
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin

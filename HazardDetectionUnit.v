@@ -3,9 +3,14 @@ module HazardDetectionUnit(input mem_read,
                            input [4:0] rs1,
                            input [4:0] rs2,
                            input is_ecall,
+                           input is_jal,
+                           input is_jalr,
+                           input is_bcond,
                            output reg PC_write,
                            output reg IF_ID_write,
-                           output reg control_op
+                           output reg control_op,
+                           output reg IF_flush,
+                           output reg ID_flush
 );
 
     always @(*) begin
@@ -21,6 +26,10 @@ module HazardDetectionUnit(input mem_read,
             PC_write = 1'b0;
             IF_ID_write = 1'b0;
             control_op = 1'b1;
+        end
+        if (is_jal || is_jalr || is_bcond) begin
+            IF_flush = 1'b1;
+            ID_flush = 1'b1;
         end
     end
 
