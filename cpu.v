@@ -144,6 +144,9 @@ module CPU(input reset,       // positive reset signal
     .dout(InstMemOut)     // output
   );
 
+  // ---------- BTB ----------
+  BTB 
+
   // Update IF/ID pipeline registers here
   always @(posedge clk) begin
     if (reset || IF_Flush) begin
@@ -211,6 +214,7 @@ module CPU(input reset,       // positive reset signal
     .is_jalr(ID_EX_is_jalr),
     .is_branch(ID_EX_is_branch),
     .is_bcond(alu_bcond),
+    .is_branch_taken(ID_EX_branch_taken),
     .PC_write(PCWrite),
     .IF_ID_write(IF_ID_Write),
     .control_op(ControlOp),
