@@ -136,7 +136,7 @@ module CPU(input reset,       // positive reset signal
     .current_pc(PCOut)   // output
   );
 
-  MUX2_to_1 PCMUX (BTBMUXOut, PC_target, (alu_bcond & ID_EX_is_branch) || ID_EX_is_jal || ID_EX_is_jalr, PCMUXOut);
+  MUX2_to_1 PCMUX (BTBMUXOut, PC_target, ((alu_bcond & ID_EX_is_branch) || ID_EX_is_jal || ID_EX_is_jalr) && ID_Flush, PCMUXOut);
   Adder PCAdder (PCOut, 32'b100, PCAdderOut);
   
   // ---------- Instruction Memory ----------
@@ -148,7 +148,7 @@ module CPU(input reset,       // positive reset signal
   );
 
   // ---------- BTB ----------
-  BTB btb (
+  BTB btb(
     .reset(reset),           //input
     .clk(clk),             //input
     .current_pc(PCOut),      //input
@@ -156,7 +156,7 @@ module CPU(input reset,       // positive reset signal
     .target_pc(PC_target),       //input
     .branch_taken(IF_Flush),    //input
     .tag_match(isBranchTaken),       //output
-    .target_pc(BTBOut),       //output
+    .target_pc_out(BTBOut)       //output
   );
 
   MUX2_to_1 BTBMUX (PCAdderOut, BTBOut, isBranchTaken, BTBMUXOut);
@@ -316,11 +316,6 @@ module CPU(input reset,       // positive reset signal
   MUX2_to_1 ALUInMUX (MUX4Out, ID_EX_imm, ID_EX_alu_src, ALUInMUXOut);
   Adder TargetAdder (AdderInMUXOut, ID_EX_imm, PC_target);
 
-  //branch taken 
-  if(ID_EX_is_branch & alu_bcond & !ID_EX_branch_taken) begin
-    IF_Flush = 1'b1;
-    ID_Flush = 1'b1;
-  end
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
