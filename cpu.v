@@ -105,6 +105,8 @@ module CPU(input reset,       // positive reset signal
   reg EX_MEM_reg_write;     // will be used in WB stage
   reg EX_MEM_pc_to_reg;
   reg EX_MEM_is_ecall;
+  reg EX_MEM_is_jal;
+  reg EX_MEM_is_jalr;
   // From others
   reg [31:0] EX_MEM_pc;
   reg [31:0] EX_MEM_alu_out;
@@ -118,6 +120,8 @@ module CPU(input reset,       // positive reset signal
   reg MEM_WB_reg_write;     // will be used in WB stage
   reg MEM_WB_pc_to_reg;
   reg MEM_WB_is_ecall;
+  reg MEM_WB_is_jal;
+  reg MEM_WB_is_jalr;
   // From others
   reg [31:0] MEM_WB_pc;
   reg [31:0] MEM_WB_mem_to_reg_src_1;
@@ -307,7 +311,7 @@ module CPU(input reset,       // positive reset signal
     .EX_MEM_rd (EX_MEM_rd),
     .MEM_WB_rd (MEM_WB_rd),
     .EX_MEM_reg_write (EX_MEM_reg_write),
-    .MEM_WB_reg_write (MEM_WB_reg_write),
+    .MEM_WB_reg_write (MEM_WB_reg_write && !(MEM_WB_is_jal || MEM_WB_is_jalr)),
     .forward_rs1_op (forward_rs1_op),
     .forward_rs2_op (forward_rs2_op)
   );
@@ -331,6 +335,8 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_rd <= 0;
       EX_MEM_pc <= 0;
       EX_MEM_pc_to_reg <= 0;
+      EX_MEM_is_jal <= 0;
+      EX_MEM_is_jalr <= 0;
     end
     else begin
       // From the control unit
@@ -340,6 +346,8 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_reg_write <= ID_EX_reg_write;     // will be used in WB stage
       EX_MEM_is_ecall <= ID_EX_is_ecall;
       EX_MEM_pc_to_reg <= ID_EX_pc_to_reg;
+      EX_MEM_is_jal <= ID_EX_is_jal;
+      EX_MEM_is_jalr <= ID_EX_is_jalr;
       // From others
       EX_MEM_alu_out <= ALUResult;
       EX_MEM_dmem_data <= MUX4Out;
@@ -370,6 +378,8 @@ module CPU(input reset,       // positive reset signal
       MEM_WB_rd <= 0;
       MEM_WB_pc <= 0;
       MEM_WB_pc_to_reg <= 0;
+      MEM_WB_is_jal <= 0;
+      MEM_WB_is_jalr <= 0;
     end
     else begin
       // From the control unit
@@ -377,6 +387,8 @@ module CPU(input reset,       // positive reset signal
       MEM_WB_reg_write <= EX_MEM_reg_write;     // will be used in WB stage
       MEM_WB_pc_to_reg <= EX_MEM_pc_to_reg;
       MEM_WB_is_ecall <= EX_MEM_is_ecall;
+      MEM_WB_is_jal <= EX_MEM_is_jal;
+      MEM_WB_is_jalr <= EX_MEM_is_jalr;
       // From others
       MEM_WB_mem_to_reg_src_1 <= DataMemOut;
       MEM_WB_mem_to_reg_src_2 <= EX_MEM_alu_out;

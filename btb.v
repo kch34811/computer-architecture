@@ -27,7 +27,7 @@ integer i;
 
 always @(posedge clk) begin
     if (reset) begin
-        for (i = 0; i < 32; i = i + 1)
+        for (i = 0; i < 32; i = i + 1) 
             buffer_table[i] = 32'b0;
             tag_table[i] = 24'b0;
     end
@@ -42,7 +42,7 @@ always @(*) begin
         target_pc_out = buffer_table[index];
     end
 
-    if (branch_taken && ) begin
+    if (branch_taken) begin
         tag_table[temp_index] = temp_tag_bit;
         buffer_table[temp_index] = target_pc;
     end
