@@ -27,7 +27,7 @@ always @(posedge clk) begin
     end
 end
 
-always @* begin
+always @(*) begin
     tag_match = 1'b0;
     target_pc = 32'b0;
 
