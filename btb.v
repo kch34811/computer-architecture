@@ -42,7 +42,7 @@ always @(*) begin
         target_pc_out = buffer_table[index];
     end
 
-    if (branch_taken && ) begin
+    if (branch_taken) begin
         tag_table[temp_index] = temp_tag_bit;
         buffer_table[temp_index] = target_pc;
     end
