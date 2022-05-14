@@ -68,6 +68,7 @@ module CPU(input reset,       // positive reset signal
   /***** IF/ID pipeline registers *****/
   reg [31:0] IF_ID_inst;           // will be used in ID stage
   reg [31:0] IF_ID_pc;
+  reg IF_ID_branch_taken;
   /***** ID/EX pipeline registers *****/
   // From the control unit
   //reg ID_EX_alu_op;         // will be used in EX stage
@@ -88,6 +89,7 @@ module CPU(input reset,       // positive reset signal
   reg [31:0] ID_EX_imm;
   reg [31:0] ID_EX_ALU_ctrl_unit_input;
   reg [4:0] ID_EX_rd;
+  reg ID_EX_branch_taken;
 
 
   /***** EX/MEM pipeline registers *****/
@@ -141,6 +143,9 @@ module CPU(input reset,       // positive reset signal
     .addr(PCOut),    // input
     .dout(InstMemOut)     // output
   );
+
+  // ---------- BTB ----------
+  BTB 
 
   // Update IF/ID pipeline registers here
   always @(posedge clk) begin
@@ -209,6 +214,7 @@ module CPU(input reset,       // positive reset signal
     .is_jalr(ID_EX_is_jalr),
     .is_branch(ID_EX_is_branch),
     .is_bcond(alu_bcond),
+    .is_branch_taken(ID_EX_branch_taken),
     .PC_write(PCWrite),
     .IF_ID_write(IF_ID_Write),
     .control_op(ControlOp),
@@ -237,6 +243,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_rd <= 0;
       ID_EX_pc <= 0;
       ID_EX_pc_to_reg <= 0;
+      ID_EX_branch_taken <= 0;
     end
     else begin
       // From the control unit
@@ -257,6 +264,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
       ID_EX_rd <= IF_ID_inst[11:7];
       ID_EX_pc <= IF_ID_pc;
+      ID_EX_branch_taken <= IF_ID_branch_taken;
     end
   end
 
@@ -291,6 +299,12 @@ module CPU(input reset,       // positive reset signal
   MUX2_to_1 AdderInMUX (MUX3Out, ID_EX_pc, ID_EX_is_jal || ID_EX_is_branch, AdderInMUXOut);
   MUX2_to_1 ALUInMUX (MUX4Out, ID_EX_imm, ID_EX_alu_src, ALUInMUXOut);
   Adder TargetAdder (AdderInMUXOut, ID_EX_imm, PC_target);
+
+  //branch taken 
+  if(ID_EX_is_branch & alu_bcond & !ID_EX_branch_taken) begin
+    IF_Flush = 1'b1;
+    ID_Flush = 1'b1;
+  end
 
   // Update EX/MEM pipeline registers here
   always @(posedge clk) begin
