@@ -46,6 +46,7 @@ module CPU(input reset,       // positive reset signal
   wire [31:0] AdderInMUXOut;
   wire [31:0] ALUInMUXOut;
   wire [31:0] PCMUXOut;
+  wire [31:0] PCMUX2Out;
   wire [31:0] REGMUXOut;
   wire [31:0] BTBMUXOut;
   wire [31:0] PC_target;
@@ -132,11 +133,12 @@ module CPU(input reset,       // positive reset signal
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),
     .PC_control (PCWrite),        // input
-    .next_pc(PCMUXOut),     // input
+    .next_pc(PCMUX2Out),     // input
     .current_pc(PCOut)   // output
   );
 
-  MUX2_to_1 PCMUX (BTBMUXOut, PC_target, ((alu_bcond & ID_EX_is_branch) || ID_EX_is_jal || ID_EX_is_jalr) && ID_Flush, PCMUXOut);
+  MUX2_to_1 PCMUX (BTBMUXOut, PC_target, ((alu_bcond & ID_EX_is_branch) || ID_EX_is_jal || ID_EX_is_jalr) && IF_Flush, PCMUXOut);
+  MUX2_to_1 PCMUX2 (PCMUXOut, ID_EX_pc + 32'b100, IF_Flush && ID_EX_branch_taken, PCMUX2Out);
   Adder PCAdder (PCOut, 32'b100, PCAdderOut);
   
   // ---------- Instruction Memory ----------
@@ -154,7 +156,7 @@ module CPU(input reset,       // positive reset signal
     .current_pc(PCOut),      //input
     .source_pc(ID_EX_pc),       //input
     .target_pc(PC_target),       //input
-    .branch_taken(IF_Flush),    //input
+    .branch_taken(ID_EX_is_jal && !ID_EX_branch_taken || ID_EX_is_jalr && !ID_EX_branch_taken || (alu_bcond && ID_EX_is_branch && !ID_EX_branch_taken)),    //input
     .tag_match(isBranchTaken),       //output
     .target_pc_out(BTBOut)       //output
   );

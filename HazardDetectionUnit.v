@@ -31,7 +31,7 @@ module HazardDetectionUnit(input mem_read,
             IF_ID_write = 1'b0;
             control_op = 1'b1;
         end
-        if (is_jal || is_jalr || (is_bcond && is_branch && !is_branch_taken) || (is_branch_taken && !is_bcond && is_branch)) begin
+        if ((is_jal && !is_branch_taken) || (is_jalr && !is_branch_taken) || (is_bcond && is_branch && !is_branch_taken) || (is_branch_taken && !is_bcond && is_branch)) begin
             IF_flush = 1'b1;
             ID_flush = 1'b1;
         end
