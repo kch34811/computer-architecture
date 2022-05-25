@@ -22,7 +22,7 @@ module Cache #(parameter LINE_SIZE = 16,
   wire [INDEX_SIZE-1:0] addr_idx;
   wire [1:0] addr_bo;
   // Reg declarations
-  reg [] cache_line; 
+  reg [CACHE_LINE_SIZE-1:0] cache_line; 
 
   // You might need registers to keep the status.
   assign addr_tag = addr[31:8];

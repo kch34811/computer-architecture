@@ -44,4 +44,4 @@
 
 `define TAG_SIZE        24
 `define INDEX_SIZE      6
-`define CACHE_LINE_SIZE 154
+`define CACHE_LINE_SIZE TAG_SIZE + 2 + 4*32
