@@ -51,12 +51,13 @@ module Cache #(parameter LINE_SIZE = 16,
     end
   end
 
-  always @(posedge clk) begin   //synchronous write
-    if(is_hit) begin            //cache hit
-      if(mem_write) begin       //Write-hit : Write Back
-        is_output_valid <= 0;
+  always @(posedge clk) begin     //synchronous write
+    if(is_hit) begin              //cache hit
+      if(mem_write) begin         //Write-hit : Write Back
+        is_output_valid <= 1; 
         if(direct_cache[addr_idx][128]) begin   //dirty bit = 1
-        DM_addr <= {direct_cache[addr_idx][153:130], addr_idx, 2'b00} // ?
+        DM_addr <= addr;      
+        DM_mem_write <= 1;    
         case (addr_bo)
           2'b00 : DM_din <= direct_cache[addr_idx][31:0];
           2'b01 : DM_din <= direct_cache[addr_idx][63:32];
@@ -65,16 +66,24 @@ module Cache #(parameter LINE_SIZE = 16,
         endcase
         end
         case (addr_bo)
-        2'b00 : direct_cache[addr_idx][31:0] <= din;
-        2'b01 : direct_cache[addr_idx][63:32] <= din;
-        2'b10 : direct_cache[addr_idx][95:64] <= din;
-        2'b11 : direct_cache[addr_idx][127:96] <= din;
+          2'b00 : direct_cache[addr_idx][31:0] <= din;
+          2'b01 : direct_cache[addr_idx][63:32] <= din;
+          2'b10 : direct_cache[addr_idx][95:64] <= din;
+          2'b11 : direct_cache[addr_idx][127:96] <= din;
         endcase
       end 
     end else begin                  //cache miss : Write-allocate
       is_output_valid <= 0;
       direct_cache[153:129] <= {addr_tag, 1'b1};
-      direct_cache[128] <= 1'b1;
+      direct_cache[128] <= 1'b0;
+      DM_addr <= addr
+      DM_mem_write <= 1;
+      case (addr_bo)
+        2'b00 : DM_din <= direct_cache[addr_idx][31:0];
+        2'b01 : DM_din <= direct_cache[addr_idx][63:32];
+        2'b10 : DM_din <= direct_cache[addr_idx][95:64];
+        2'b11 : DM_din <= direct_cache[addr_idx][127:96];
+      endcase
       case (addr_bo)
         2'b00 : direct_cache[addr_idx][31:0] <= din;
         2'b01 : direct_cache[addr_idx][63:32] <= din;
@@ -91,7 +100,7 @@ module Cache #(parameter LINE_SIZE = 16,
     .is_input_valid(),
     .addr(DM_addr),
     .mem_read(),
-    .mem_write(),
+    .mem_write(DM_mem_write),
     .din(DM_din),
     // is output from the data memory valid?
     .is_output_valid(),
