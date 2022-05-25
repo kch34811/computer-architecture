@@ -4,6 +4,7 @@ module Cache #(parameter LINE_SIZE = 16,
                parameter NUM_WAYS = /* Your choice */) (
     input reset,
     input clk,
+    //to see upload
 
     input is_input_valid,
     input [31:0] addr,
