@@ -1,7 +1,7 @@
 `include "CLOG2.v"
 module Cache #(parameter LINE_SIZE = 16,
-               parameter NUM_SETS = /* Your choice */
-               parameter NUM_WAYS = /* Your choice */) (
+               parameter NUM_SETS = 2
+               parameter NUM_WAYS = 2 (
     input reset,
     input clk,
 
@@ -17,10 +17,21 @@ module Cache #(parameter LINE_SIZE = 16,
     output is_hit);
   // Wire declarations
   wire is_data_mem_ready;
+  
+  wire [TAG_SIZE-1:0] addr_tag;
+  wire [INDEX_SIZE-1:0] addr_idx;
+  wire [1:0] addr_bo;
   // Reg declarations
+  reg [] cache_line; 
+
   // You might need registers to keep the status.
+  assign addr_tag = addr[31:8];
+  assign addr_idx = addr[7:2];
+  assign addr_bo = addr[1:0];
 
   assign is_ready = is_data_mem_ready;
+
+  //Write Back
 
   // Instantiate data memory
   DataMemory #(.BLOCK_SIZE(LINE_SIZE)) data_mem(
@@ -37,4 +48,4 @@ module Cache #(parameter LINE_SIZE = 16,
     // is data memory ready to accept request?
     .mem_ready(is_data_mem_ready)
   );
-end
+endmodule

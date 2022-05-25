@@ -41,3 +41,7 @@
 // FUNCT7
 `define FUNCT7_SUB      7'b0100000
 `define FUNCT7_OTHERS   7'b0000000
+
+`define TAG_SIZE        24
+`define INDEX_SIZE      6
+`define CACHE_LINE_SIZE 154
