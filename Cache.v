@@ -61,12 +61,12 @@ module Cache #(parameter LINE_SIZE = 16,
     if (reset) begin
       for(i = 0; i < 64; i = i + 1)
         direct_cache[i] = 0;
-      waiting_state = not_waiting;
+      waiting_state = `not_waiting;
     end
   end
  
   always @(*) begin                                 
-    if(waiting_state == not_waiting) begin
+    if(waiting_state == `not_waiting) begin
       if(!(mem_read|mem_write)) begin
         _is_hit <= 1;
         _is_output_valid <= 1;
@@ -90,14 +90,14 @@ module Cache #(parameter LINE_SIZE = 16,
             DM_mem_read <= 1;
             DM_is_input_valid <= 1;
             DM_addr <= addr;
-            waiting_state <= is_waiting;
+            waiting_state <= `is_waiting;
           end else begin                                    
             if(direct_cache[addr_idx][`DIRTY_BIT]) begin      
               DM_mem_write <= 1;   
               DM_is_input_valid <= 1;
               DM_addr <= {direct_cache[addr_idx][`TAG_BIT], addr_idx, 2'b00};
               DM_din <= direct_cache[addr_idx][127:0];
-              waiting_state <= is_waiting;              
+              waiting_state <= `is_waiting;              
             end 
           end
         end     
@@ -106,7 +106,7 @@ module Cache #(parameter LINE_SIZE = 16,
   end
 
   always @(posedge clk) begin                       //synchronous write
-    if(waiting_state == not_waiting) begin
+    if(waiting_state == `not_waiting) begin
       if(!(mem_read|mem_write)) begin
         _is_hit <= 1;
         _is_output_valid <= 1;
@@ -133,13 +133,14 @@ module Cache #(parameter LINE_SIZE = 16,
               2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
             endcase
             direct_cache[addr_idx][`VALID_BIT] <= 1;
+            _is_output_valid <= 1;
           end else begin                                 //valid = 1
             if(direct_cache[addr_idx][`DIRTY_BIT]) begin    //dirty = 1
               DM_mem_write <= 1;   
               DM_is_input_valid <= 1;
               DM_addr <= {direct_cache[addr_idx][`TAG_BIT], addr_idx, 2'b00};
               DM_din <= direct_cache[addr_idx][127:0];
-              waiting_state <= is_waiting;
+              waiting_state <= `is_waiting;
             end else begin                                //dirty = 0;
               case (addr_bo)
                 2'b00 : direct_cache[addr_idx][`BLOCK_0] <= din;
@@ -148,18 +149,16 @@ module Cache #(parameter LINE_SIZE = 16,
                 2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
               endcase
               direct_cache[addr_idx][`DIRTY_BIT] <= 1;
+              _is_output_valid <= 1;
             end
           end
-          direct_cache[addr_idx][`TAG_BIT] <= addr_tag;  //update tag
-          _is_output_valid <= 1;
-          _is_hit <= 1;
         end            
       end
     end
   end
 
-  always @(*) begin
-    if(waiting_state == is_waiting) begin
+  always @(is_data_mem_ready) begin
+    if(waiting_state == `is_waiting) begin
       if(DM_is_output_valid) begin
         direct_cache[addr_idx][`VALID_BIT] <= 1;
         direct_cache[addr_idx][`DIRTY_BIT] <= 0;
@@ -173,7 +172,7 @@ module Cache #(parameter LINE_SIZE = 16,
         _is_output_valid <= 1;
         _is_hit <= 1;
         direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
-        waiting_state <= not_waiting;
+        waiting_state <= `not_waiting;
       end else if (is_data_mem_ready) begin
         case (addr_bo)
           2'b00 : direct_cache[addr_idx][`BLOCK_0] <= din;
@@ -181,11 +180,12 @@ module Cache #(parameter LINE_SIZE = 16,
           2'b10 : direct_cache[addr_idx][`BLOCK_2] <= din;
           2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
         endcase
+        direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
         direct_cache[addr_idx][`VALID_BIT] <= 1;
-        direct_cache[addr_idx][`DIRTY_BIT] <= 0;        
+        direct_cache[addr_idx][`DIRTY_BIT] <= 0;      
         _is_output_valid <= 1;
         _is_hit <= 1;
-        waiting_state <= not_waiting;
+        waiting_state <= `not_waiting;
       end
     end
   end
