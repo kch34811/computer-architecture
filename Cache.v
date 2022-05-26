@@ -72,12 +72,11 @@ module Cache #(parameter LINE_SIZE = 16,
         _is_output_valid <= 1;
       end else begin
         _is_hit <= direct_cache[addr_idx][`VALID_BIT] && (addr_tag == direct_cache[addr_idx][`TAG_BIT]);
-        _is_output_valid <= 0;
+        _is_output_valid <= 1;
       end
 
       if(mem_read) begin                               //asynchronous read
         if(_is_hit) begin                                //cache hit
-          _is_output_valid <= 1;
           case (addr_bo)
             2'b00 : _dout <= direct_cache[addr_idx][`BLOCK_0];
             2'b01 : _dout <= direct_cache[addr_idx][`BLOCK_1];
@@ -97,6 +96,7 @@ module Cache #(parameter LINE_SIZE = 16,
               DM_is_input_valid <= 1;
               DM_addr <= {direct_cache[addr_idx][`TAG_BIT], addr_idx, 2'b00};
               DM_din <= direct_cache[addr_idx][127:0];
+              _is_output_valid <= 0;
               waiting_state <= `is_waiting;              
             end 
           end
@@ -112,7 +112,7 @@ module Cache #(parameter LINE_SIZE = 16,
         _is_output_valid <= 1;
       end else begin
         _is_hit <= direct_cache[addr_idx][`VALID_BIT] && (addr_tag == direct_cache[addr_idx][`TAG_BIT]);
-        _is_output_valid <= 0;
+        _is_output_valid <= 1;
       end
       if(mem_write) begin                       
         if(_is_hit) begin                                //cache hit    
@@ -123,9 +123,9 @@ module Cache #(parameter LINE_SIZE = 16,
             2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
           endcase
           direct_cache[addr_idx][`DIRTY_BIT] <= 1;
-          _is_output_valid <= 1;
         end else begin                                 //cache miss
           if(!direct_cache[addr_idx][`VALID_BIT]) begin   //valid = 0
+            direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
             case (addr_bo)
               2'b00 : direct_cache[addr_idx][`BLOCK_0] <= din;
               2'b01 : direct_cache[addr_idx][`BLOCK_1] <= din;
@@ -133,15 +133,17 @@ module Cache #(parameter LINE_SIZE = 16,
               2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
             endcase
             direct_cache[addr_idx][`VALID_BIT] <= 1;
-            _is_output_valid <= 1;
+            _is_hit <= 1;
           end else begin                                 //valid = 1
             if(direct_cache[addr_idx][`DIRTY_BIT]) begin    //dirty = 1
               DM_mem_write <= 1;   
               DM_is_input_valid <= 1;
               DM_addr <= {direct_cache[addr_idx][`TAG_BIT], addr_idx, 2'b00};
               DM_din <= direct_cache[addr_idx][127:0];
+              _is_output_valid <= 0;
               waiting_state <= `is_waiting;
             end else begin                                //dirty = 0;
+              direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
               case (addr_bo)
                 2'b00 : direct_cache[addr_idx][`BLOCK_0] <= din;
                 2'b01 : direct_cache[addr_idx][`BLOCK_1] <= din;
@@ -149,7 +151,7 @@ module Cache #(parameter LINE_SIZE = 16,
                 2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
               endcase
               direct_cache[addr_idx][`DIRTY_BIT] <= 1;
-              _is_output_valid <= 1;
+              _is_hit <= 1;
             end
           end
         end            
