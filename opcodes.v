@@ -45,3 +45,10 @@
 `define TAG_SIZE        24
 `define INDEX_SIZE      6
 `define CACHE_LINE_SIZE TAG_SIZE + 2 + 4*32
+`define TAG_BIT         153:130
+`define VALID_BIT       129
+`define DIRTY_BIT       128
+`define BLOCK_0         31:0
+`define BLOCK_1         63:32
+`define BLOCK_2         95:64
+`define BLOCK_3         127:96
