@@ -130,7 +130,7 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),
-    .PC_control (PCWrite),        // input
+    .PC_control (PCWrite && (cache_is_ready && cache_is_output_valid && cache_is_hit)),        // input
     .next_pc(PCMUXOut),     // input
     .current_pc(PCOut)   // output
   );
