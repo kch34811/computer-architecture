@@ -60,6 +60,10 @@ module CPU(input reset,       // positive reset signal
   wire IF_Flush;
   wire ID_Flush;
 
+  wire cache_is_ready;
+  wire cache_is_output_valid;
+  wire cache_is_hit;
+
   /***** Register declarations *****/
   // You need to modify the width of registers
   // In addition, 
@@ -148,7 +152,7 @@ module CPU(input reset,       // positive reset signal
       IF_ID_inst <= 0;
       IF_ID_pc <= 0;
     end
-    else if (IF_ID_Write) begin
+    else if (IF_ID_Write && (cache_is_ready && cache_is_output_valid && cache_is_hit)) begin
       IF_ID_inst <= InstMemOut;
       IF_ID_pc <= PCOut;
     end
@@ -238,7 +242,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_pc <= 0;
       ID_EX_pc_to_reg <= 0;
     end
-    else begin
+    else if (cache_is_ready && cache_is_output_valid && cache_is_hit) begin
       // From the control unit
       ID_EX_alu_src <= ControlOp ? 0 : AluSrc;      // will be used in EX stage
       ID_EX_mem_write <= ControlOp ? 0 : MemWrite;      // will be used in MEM stage
@@ -305,7 +309,7 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_pc <= 0;
       EX_MEM_pc_to_reg <= 0;
     end
-    else begin
+    else if (cache_is_ready && cache_is_output_valid && cache_is_hit) begin
       // From the control unit
       EX_MEM_mem_write <= ID_EX_mem_write;     // will be used in MEM stage
       EX_MEM_mem_read <= ID_EX_mem_read;      // will be used in MEM stage
@@ -321,15 +325,19 @@ module CPU(input reset,       // positive reset signal
     end
   end
 
-  // ---------- Data Memory ----------
-  DataMemory dmem(
-    .reset (reset),      // input
-    .clk (clk),        // input
-    .addr (EX_MEM_alu_out),       // input
-    .din (EX_MEM_dmem_data),        // input
-    .mem_read (EX_MEM_mem_read),   // input
-    .mem_write (EX_MEM_mem_write),  // input
-    .dout (DataMemOut)        // output
+  // ---------- Cache ----------
+  Cache cache(
+      .reset(reset),
+      .clk(clk),
+      .is_input_valid(1'b0),
+      .addr(EX_MEM_alu_out),
+      .mem_read(EX_MEM_mem_read),
+      .mem_write(EX_MEM_mem_write),
+      .din(EX_MEM_dmem_data),
+      .is_ready(cache_is_ready),
+      .is_output_valid(cache_is_output_valid),
+      .dout(DataMemOut),
+      .is_hit(cache_is_hit)
   );
 
   // Update MEM/WB pipeline registers here
@@ -344,7 +352,7 @@ module CPU(input reset,       // positive reset signal
       MEM_WB_pc <= 0;
       MEM_WB_pc_to_reg <= 0;
     end
-    else begin
+    else if (cache_is_ready && cache_is_output_valid && cache_is_hit) begin
       // From the control unit
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;   // will be used in WB stage
       MEM_WB_reg_write <= EX_MEM_reg_write;     // will be used in WB stage
