@@ -26,7 +26,7 @@ module Cache #(parameter LINE_SIZE = 16,
   wire [`INDEX_SIZE-1:0] addr_idx;
   wire [1:0] addr_bo;
   // Reg declarations
-  reg [`CACHE_LINE_SIZE-1:0] direct_cache[0:2**`INDEX_SIZE]; 
+  reg [`CACHE_LINE_SIZE-1:0] direct_cache[0:2**`INDEX_SIZE-1]; 
   
   // About Data Memory
   reg DM_is_input_valid;
@@ -55,6 +55,15 @@ module Cache #(parameter LINE_SIZE = 16,
   assign is_hit = _is_hit;
   assign is_output_valid = _is_output_valid;
   assign dout = _dout;
+
+  integer i;
+
+  always @(posedge clk) begin
+    if (reset) begin
+      for(i = 0; i < 64; i = i + 1)
+        direct_cache[i] = 0;
+    end
+  end
  
 
   always @(*) begin                                 //asynchronous read
@@ -128,7 +137,7 @@ module Cache #(parameter LINE_SIZE = 16,
   end
 
   always @(posedge clk) begin                       //synchronous write
-    if(mem_write) begin 
+    if(mem_write) begin
       _is_output_valid <= 0;                          
       if(_is_hit) begin                                //cache hit    
         case (addr_bo)
