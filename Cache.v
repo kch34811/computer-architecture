@@ -43,7 +43,12 @@ module Cache #(parameter LINE_SIZE = 16,
   assign addr_bo = addr[1:0];
 
   always @(*) begin                                 //asynchronous read
-    is_hit = direct_cache[addr_idx][VALID_BIT] && (addr_tag == direct_cache[addr_idx][TAG_BIT]);
+    if(!(mem_read|mem_write)) begin
+      is_hit <= 1;
+      is_output_valid <= 1;
+    end else begin
+      is_hit <= direct_cache[addr_idx][VALID_BIT] && (addr_tag == direct_cache[addr_idx][TAG_BIT]);
+    end
     if(mem_read) begin
       if(is_hit) begin                                //cache hit
         is_output_valid <= 1;
