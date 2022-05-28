@@ -43,6 +43,9 @@ module Cache #(parameter LINE_SIZE = 16,
   reg [31:0] _dout;
   reg _is_output_valid;
 
+  reg [31:0] temp_addr;
+  reg [127:0] temp_din;
+
 
   // You might need registers to keep the status.
   assign is_ready = is_data_mem_ready;
@@ -69,10 +72,9 @@ module Cache #(parameter LINE_SIZE = 16,
     if(waiting_state == `not_waiting) begin
       if(!(mem_read|mem_write)) begin
         _is_output_valid <= 1;
-      end else begin
-        _is_hit <= direct_cache[addr_idx][`VALID_BIT] && (addr_tag == direct_cache[addr_idx][`TAG_BIT]);
-        _is_output_valid <= 1;
       end
+      
+      _is_hit <= direct_cache[addr_idx][`VALID_BIT] && (addr_tag == direct_cache[addr_idx][`TAG_BIT]);
 
       if(mem_read) begin                               //asynchronous read
         if(_is_hit) begin                                //cache hit
@@ -82,20 +84,22 @@ module Cache #(parameter LINE_SIZE = 16,
             2'b10 : _dout <= direct_cache[addr_idx][`BLOCK_2];
             2'b11 : _dout <= direct_cache[addr_idx][`BLOCK_3];
           endcase
+          _is_output_valid <= 1;
         end else begin                                  //cache miss 
-          if(!direct_cache[addr_idx][`VALID_BIT] | !direct_cache[addr_idx][`DIRTY_BIT]) begin      //valid = 0 or dirty = 0
+          if((direct_cache[addr_idx][`VALID_BIT] && !direct_cache[addr_idx][`DIRTY_BIT]) || (!direct_cache[addr_idx][`VALID_BIT] && !direct_cache[addr_idx][`DIRTY_BIT])) begin      //valid = 0 or dirty = 0
             _is_output_valid <= 0;
             DM_mem_read <= 1;
             DM_is_input_valid <= 1;
             DM_addr <= addr;
             waiting_state <= `is_waiting;
           end else begin                                    
-            if(direct_cache[addr_idx][`DIRTY_BIT]) begin       // dirty 1
+            if(direct_cache[addr_idx][`VALID_BIT] && direct_cache[addr_idx][`DIRTY_BIT]) begin       // dirty 1
               DM_mem_write <= 1;   
               DM_is_input_valid <= 1;
               DM_addr <= {direct_cache[addr_idx][`TAG_BIT], addr_idx, 2'b00};
               DM_din <= direct_cache[addr_idx][127:0];
               _is_output_valid <= 0;
+              temp_addr <= addr;
               waiting_state <= `is_waiting;              
             end 
           end
@@ -108,10 +112,10 @@ module Cache #(parameter LINE_SIZE = 16,
     if(waiting_state == `not_waiting) begin
       if(!(mem_read|mem_write)) begin
         _is_output_valid <= 1;
-      end else begin
-        _is_hit <= direct_cache[addr_idx][`VALID_BIT] && (addr_tag == direct_cache[addr_idx][`TAG_BIT]);
-        _is_output_valid <= 1;
       end
+
+      _is_hit <= direct_cache[addr_idx][`VALID_BIT] && (addr_tag == direct_cache[addr_idx][`TAG_BIT]);
+
       if(mem_write) begin                       
         if(_is_hit) begin                                //cache hit    
           case (addr_bo)
@@ -121,6 +125,7 @@ module Cache #(parameter LINE_SIZE = 16,
             2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
           endcase
           direct_cache[addr_idx][`DIRTY_BIT] <= 1;
+          _is_output_valid <= 1;
         end else begin                                 //cache miss
           if(!direct_cache[addr_idx][`VALID_BIT]) begin   //valid = 0
             direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
@@ -132,6 +137,7 @@ module Cache #(parameter LINE_SIZE = 16,
             endcase
             direct_cache[addr_idx][`VALID_BIT] <= 1;
             direct_cache[addr_idx][`DIRTY_BIT] <= 1;
+            _is_output_valid <= 1;
           end else begin                                 //valid = 1
             if(direct_cache[addr_idx][`DIRTY_BIT]) begin    //dirty = 1
               DM_mem_write <= 1;   
@@ -139,6 +145,8 @@ module Cache #(parameter LINE_SIZE = 16,
               DM_addr <= {direct_cache[addr_idx][`TAG_BIT], addr_idx, 2'b00};
               DM_din <= direct_cache[addr_idx][127:0];
               _is_output_valid <= 0;
+              temp_din <= din;
+              temp_addr <= addr;
               waiting_state <= `is_waiting;
             end else begin                                //dirty = 0;
               direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
@@ -160,19 +168,19 @@ module Cache #(parameter LINE_SIZE = 16,
   always @(is_data_mem_ready) begin
     if(waiting_state == `is_waiting) begin
       if(DM_is_output_valid) begin // read done
-        DM_mem_read <= 0;
         direct_cache[addr_idx][`VALID_BIT] <= 1;
         direct_cache[addr_idx][`DIRTY_BIT] <= 0;
         direct_cache[addr_idx][127:0] <= DM_dout;
+        direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
         case (addr_bo)
           2'b00 : _dout <= direct_cache[addr_idx][`BLOCK_0];
           2'b01 : _dout <= direct_cache[addr_idx][`BLOCK_1];
           2'b10 : _dout <= direct_cache[addr_idx][`BLOCK_2];
           2'b11 : _dout <= direct_cache[addr_idx][`BLOCK_3];
         endcase
+        DM_mem_read <= 0;
         DM_is_input_valid <= 0;
         _is_output_valid <= 1;
-        direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
         waiting_state <= `not_waiting;
       end else if (is_data_mem_ready) begin // write done
         if(mem_read && direct_cache[addr_idx][`DIRTY_BIT]) begin
@@ -180,19 +188,19 @@ module Cache #(parameter LINE_SIZE = 16,
             _is_output_valid <= 0;
             DM_mem_read <= 1;
             DM_is_input_valid <= 1;
-            DM_addr <= addr;
+            DM_addr <= temp_addr;
             waiting_state <= `is_waiting;
         end else begin
-          DM_mem_write <= 0;
           case (addr_bo)
-            2'b00 : direct_cache[addr_idx][`BLOCK_0] <= din;
-            2'b01 : direct_cache[addr_idx][`BLOCK_1] <= din;
-            2'b10 : direct_cache[addr_idx][`BLOCK_2] <= din;
-            2'b11 : direct_cache[addr_idx][`BLOCK_3] <= din;
+            2'b00 : direct_cache[addr_idx][`BLOCK_0] <= temp_din;
+            2'b01 : direct_cache[addr_idx][`BLOCK_1] <= temp_din;
+            2'b10 : direct_cache[addr_idx][`BLOCK_2] <= temp_din;
+            2'b11 : direct_cache[addr_idx][`BLOCK_3] <= temp_din;
           endcase
           direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
           direct_cache[addr_idx][`VALID_BIT] <= 1;
           direct_cache[addr_idx][`DIRTY_BIT] <= 1;      
+          DM_mem_write <= 0;
           DM_is_input_valid <= 0;
           _is_output_valid <= 1;
           waiting_state <= `not_waiting;
