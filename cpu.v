@@ -130,7 +130,7 @@ module CPU(input reset,       // positive reset signal
   PC pc(
     .reset(reset),       // input (Use reset to initialize PC. Initial value must be 0)
     .clk(clk),
-    .PC_control (PCWrite && (cache_is_ready && cache_is_output_valid && cache_is_hit)),        // input
+    .PC_control (PCWrite && (cache_is_output_valid && cache_is_hit)),        // input
     .next_pc(PCMUXOut),     // input
     .current_pc(PCOut)   // output
   );
@@ -152,7 +152,7 @@ module CPU(input reset,       // positive reset signal
       IF_ID_inst <= 0;
       IF_ID_pc <= 0;
     end
-    else if (IF_ID_Write && (cache_is_ready && cache_is_output_valid && cache_is_hit)) begin
+    else if (IF_ID_Write && (cache_is_output_valid && cache_is_hit)) begin
       IF_ID_inst <= InstMemOut;
       IF_ID_pc <= PCOut;
     end
@@ -168,7 +168,7 @@ module CPU(input reset,       // positive reset signal
     .rs2 (IF_ID_inst[24:20]),          // input
     .rd (MEM_WB_rd),           // input
     .rd_din (REGMUXOut),       // input
-    .write_enable (MEM_WB_reg_write),    // input
+    .write_enable (MEM_WB_reg_write & cache_is_output_valid),    // input
     .rs1_dout (rs1_dout),     // output
     .rs2_dout (rs2_dout)      // output
   );
@@ -242,7 +242,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_pc <= 0;
       ID_EX_pc_to_reg <= 0;
     end
-    else if (cache_is_ready && cache_is_output_valid && cache_is_hit) begin
+    else if (cache_is_output_valid && cache_is_hit) begin
       // From the control unit
       ID_EX_alu_src <= ControlOp ? 0 : AluSrc;      // will be used in EX stage
       ID_EX_mem_write <= ControlOp ? 0 : MemWrite;      // will be used in MEM stage
@@ -284,14 +284,14 @@ module CPU(input reset,       // positive reset signal
     .rs2 (ID_EX_ALU_ctrl_unit_input[24:20]),
     .EX_MEM_rd (EX_MEM_rd),
     .MEM_WB_rd (MEM_WB_rd),
-    .EX_MEM_reg_write (EX_MEM_reg_write),
-    .MEM_WB_reg_write (MEM_WB_reg_write),
+    .EX_MEM_reg_write (EX_MEM_reg_write & cache_is_output_valid),
+    .MEM_WB_reg_write (MEM_WB_reg_write & cache_is_output_valid),
     .forward_rs1_op (forward_rs1_op),
     .forward_rs2_op (forward_rs2_op)
   );
 
-  MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs1_op, MUX3Out);
-  MUX4_to_1 MUX4 (ID_EX_rs2_data, EX_MEM_alu_out, MUX2Out, 32'b0, forward_rs2_op, MUX4Out);
+  MUX4_to_1 MUX3 (ID_EX_rs1_data, EX_MEM_alu_out, MUX2Out, 32'b0, cache_is_output_valid ? forward_rs1_op : 0, MUX3Out);
+  MUX4_to_1 MUX4 (ID_EX_rs2_data, EX_MEM_alu_out, MUX2Out, 32'b0, cache_is_output_valid ? forward_rs2_op : 0, MUX4Out);
   MUX2_to_1 AdderInMUX (MUX3Out, ID_EX_pc, ID_EX_is_jal || ID_EX_is_branch, AdderInMUXOut);
   MUX2_to_1 ALUInMUX (MUX4Out, ID_EX_imm, ID_EX_alu_src, ALUInMUXOut);
   Adder TargetAdder (AdderInMUXOut, ID_EX_imm, PC_target);
@@ -309,7 +309,7 @@ module CPU(input reset,       // positive reset signal
       EX_MEM_pc <= 0;
       EX_MEM_pc_to_reg <= 0;
     end
-    else if (cache_is_ready && cache_is_output_valid && cache_is_hit) begin
+    else if (cache_is_output_valid && cache_is_hit) begin
       // From the control unit
       EX_MEM_mem_write <= ID_EX_mem_write;     // will be used in MEM stage
       EX_MEM_mem_read <= ID_EX_mem_read;      // will be used in MEM stage
@@ -352,7 +352,7 @@ module CPU(input reset,       // positive reset signal
       MEM_WB_pc <= 0;
       MEM_WB_pc_to_reg <= 0;
     end
-    else if (cache_is_ready && cache_is_output_valid && cache_is_hit) begin
+    else if (cache_is_output_valid && cache_is_hit) begin
       // From the control unit
       MEM_WB_mem_to_reg <= EX_MEM_mem_to_reg;   // will be used in WB stage
       MEM_WB_reg_write <= EX_MEM_reg_write;     // will be used in WB stage
@@ -367,11 +367,11 @@ module CPU(input reset,       // positive reset signal
   end
 
   MUX2_to_1 MUX2 (MEM_WB_mem_to_reg_src_2, MEM_WB_mem_to_reg_src_1, MEM_WB_mem_to_reg, MUX2Out);
-  MUX2_to_1 REGMUX (MUX2Out, MEM_WB_pc + 32'b100, MEM_WB_pc_to_reg, REGMUXOut);
+  MUX2_to_1 REGMUX (MUX2Out, MEM_WB_pc + 32'b100, MEM_WB_pc_to_reg & cache_is_output_valid, REGMUXOut);
 
   assign is_halted = haltFlag;
   always @(*) begin
-    if (MEM_WB_is_ecall == 1'b1) begin
+    if (MEM_WB_is_ecall == 1'b1 & cache_is_output_valid) begin
       haltFlag <= 1'b1;
     end
     else haltFlag <= 1'b0;
