@@ -174,6 +174,7 @@ module Cache #(parameter LINE_SIZE = 16,
           2'b10 : _dout <= direct_cache[addr_idx][`BLOCK_2];
           2'b11 : _dout <= direct_cache[addr_idx][`BLOCK_3];
         endcase
+        DM_is_input_valid <= 0;
         _is_output_valid <= 1;
         _is_hit <= 1;
         direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
@@ -197,6 +198,7 @@ module Cache #(parameter LINE_SIZE = 16,
           direct_cache[addr_idx][`TAG_BIT] <= addr_tag;
           direct_cache[addr_idx][`VALID_BIT] <= 1;
           direct_cache[addr_idx][`DIRTY_BIT] <= 1;      
+          DM_is_input_valid <= 0;
           _is_output_valid <= 1;
           _is_hit <= 1;
           waiting_state <= `not_waiting;
