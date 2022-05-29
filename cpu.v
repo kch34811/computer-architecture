@@ -259,7 +259,7 @@ module CPU(input reset,       // positive reset signal
       ID_EX_rs2_data <= MUX7Out;
       ID_EX_imm <= ImmGenOut;
       ID_EX_ALU_ctrl_unit_input <= IF_ID_inst;
-      ID_EX_rd <= IF_ID_inst[11:7];
+      ID_EX_rd <= MemWrite ? 0 : IF_ID_inst[11:7];
       ID_EX_pc <= IF_ID_pc;
     end
   end
